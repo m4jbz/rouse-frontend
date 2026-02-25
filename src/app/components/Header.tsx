@@ -1,8 +1,11 @@
 import { Search, User, ShoppingCart, Menu } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router';
+import { useCart } from '@/context/CartContext';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { totalItems, openCart } = useCart();
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[#D4B888]">
@@ -11,9 +14,11 @@ export function Header() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <h1 className="text-2xl sm:text-3xl text-[#C8923A] mb-0" style={{ fontFamily: 'var(--font-serif)' }}>
-              Pastelería Rouse
-            </h1>
+            <Link to="/">
+              <h1 className="text-2xl sm:text-3xl text-[#C8923A] mb-0" style={{ fontFamily: 'var(--font-serif)' }}>
+                Pastelería Rouse
+              </h1>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -40,14 +45,19 @@ export function Header() {
             <button className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors">
               <Search className="w-5 h-5" />
             </button>
-            <button className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors">
+            <Link to="/login" className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors">
               <User className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors relative">
+            </Link>
+            <button
+              onClick={openCart}
+              className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors relative"
+            >
               <ShoppingCart className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 bg-[#C8923A] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                0
-              </span>
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#C8923A] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
             </button>
             <button 
               className="lg:hidden p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors"

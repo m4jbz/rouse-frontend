@@ -1,19 +1,34 @@
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ShoppingCart } from 'lucide-react';
+import { useCart, type CartProduct } from '@/context/CartContext';
 
 interface ProductCardProps {
+  id: string;
   image: string;
   name: string;
   price: number;
   badge?: 'Más vendido' | 'Nuevo' | 'Edición limitada';
 }
 
-export function ProductCard({ image, name, price, badge }: ProductCardProps) {
+export function ProductCard({ id, image, name, price, badge }: ProductCardProps) {
+  const { addItem } = useCart();
+
   const badgeColors = {
     'Más vendido': 'bg-[#C8923A] text-white',
     'Nuevo': 'bg-[#D4A445] text-white',
     'Edición limitada': 'bg-[#3E2412] text-white'
   };
+
+  function handleAddToCart() {
+    const product: CartProduct = {
+      id,
+      name,
+      price,
+      image,
+      badge,
+    };
+    addItem(product);
+  }
 
   return (
     <div className="group bg-white shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
@@ -37,7 +52,10 @@ export function ProductCard({ image, name, price, badge }: ProductCardProps) {
           <p className="text-xl text-[#C8923A]" style={{ fontFamily: 'var(--font-sans)' }}>
             ${price.toLocaleString('es-MX')} MXN
           </p>
-          <button className="bg-[#C8923A] text-white p-2.5 hover:bg-[#A67A28] transition-all duration-300 hover:scale-110 group/btn">
+          <button
+            onClick={handleAddToCart}
+            className="bg-[#C8923A] text-white p-2.5 hover:bg-[#A67A28] transition-all duration-300 hover:scale-110 group/btn"
+          >
             <ShoppingCart className="w-5 h-5" />
           </button>
         </div>
