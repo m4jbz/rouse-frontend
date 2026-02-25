@@ -1,10 +1,13 @@
+import { Routes, Route } from 'react-router';
+import { CartProvider } from '@/context/CartContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
-import { CategoryCard } from './components/CategoryCard';
 import { ProductCard } from './components/ProductCard';
-import { BrandStory } from './components/BrandStory';
-import { Newsletter } from './components/Newsletter';
 import { Footer } from './components/Footer';
+import { CartDrawer } from './components/CartDrawer';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { CartPage } from './pages/CartPage';
 import Pastel1 from '../../assets/pastel1.jpg';
 import Pastel2 from '../../assets/pastel2.jpg';
 import Pastel3 from '../../assets/pastel3.jpg';
@@ -16,44 +19,52 @@ import Pastel8 from '../../assets/pastel8.jpg';
 
 const featuredProducts = [
   {
+    id: 'tres-leches-clasico',
     name: 'Pastel Tres Leches Clásico',
     price: 450,
     image: Pastel1,
     badge: 'Más vendido' as const
   },
   {
+    id: 'chocolate-premium',
     name: 'Chocolate Artesanal Premium',
     price: 520,
     image: Pastel2,
     badge: 'Más vendido' as const
   },
   {
+    id: 'conchas-tradicionales',
     name: 'Conchas Tradicionales (6 pzas)',
     price: 85,
     image: Pastel3,
   },
   {
+    id: 'flan-napolitano',
     name: 'Flan Napolitano',
     price: 280,
     image: Pastel4,
     badge: 'Nuevo' as const
   },
   {
+    id: 'churros-rellenos',
     name: 'Churros Rellenos (6 pzas)',
     price: 120,
     image: Pastel5,
   },
   {
+    id: 'pastel-fresa',
     name: 'Pastel de Fresa Elegante',
     price: 490,
     image: Pastel6,
   },
   {
+    id: 'cupcakes-vainilla',
     name: 'Cupcakes Vainilla (6 pzas)',
     price: 180,
     image: Pastel7,
   },
   {
+    id: 'pan-dulce-surtido',
     name: 'Pan Dulce Surtido (12 pzas)',
     price: 150,
     image: Pastel8,
@@ -61,10 +72,11 @@ const featuredProducts = [
   }
 ];
 
-export default function App() {
+function HomePage() {
   return (
     <div className="min-h-screen">
       <Header />
+      <CartDrawer />
       <Hero />
 
       {/* Featured Products Section */}
@@ -79,9 +91,10 @@ export default function App() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product, index) => (
+            {featuredProducts.map((product) => (
               <ProductCard
-                key={index}
+                key={product.id}
+                id={product.id}
                 name={product.name}
                 price={product.price}
                 image={product.image}
@@ -99,5 +112,18 @@ export default function App() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <CartProvider>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/cart" element={<CartPage />} />
+      </Routes>
+    </CartProvider>
   );
 }
