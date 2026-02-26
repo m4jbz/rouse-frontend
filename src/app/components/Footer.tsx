@@ -1,8 +1,9 @@
 import { Facebook, Instagram, Twitter, MapPin, Phone, Mail } from 'lucide-react';
+import { Link } from 'react-router';
 
 export function Footer() {
   return (
-    <footer className="bg-[#3E2412] text-white">
+    <footer id="contacto" className="bg-[#3E2412] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* About */}
@@ -22,38 +23,28 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="mb-4 text-[#D4A445]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <h3 className="text-xl mb-4 text-[#D4A445]" style={{ fontFamily: 'var(--font-serif)' }}>
               Enlaces rápidos
-            </h4>
+            </h3>
             <ul className="space-y-2" style={{ fontFamily: 'var(--font-sans)' }}>
               <li>
-                <a href="#pasteles" className="text-white/80 hover:text-[#D4A445] transition-colors">
+                <Link to="/pasteles" className="text-white/80 hover:text-[#D4A445] transition-colors">
                   Pasteles
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#panaderia" className="text-white/80 hover:text-[#D4A445] transition-colors">
+                <Link to="/panaderia" className="text-white/80 hover:text-[#D4A445] transition-colors">
                   Panadería
-                </a>
-              </li>
-              <li>
-                <a href="#postres" className="text-white/80 hover:text-[#D4A445] transition-colors">
-                  Postres
-                </a>
-              </li>
-              <li>
-                <a href="#regalos" className="text-white/80 hover:text-[#D4A445] transition-colors">
-                  Regalos
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
 
           {/* Customer Service */}
           <div>
-            <h4 className="mb-4 text-[#D4A445]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <h3 className="text-xl mb-4 text-[#D4A445]" style={{ fontFamily: 'var(--font-serif)' }}>
               Atención al cliente
-            </h4>
+            </h3>
             <ul className="space-y-2" style={{ fontFamily: 'var(--font-sans)' }}>
               <li>
                 <a href="#" className="text-white/80 hover:text-[#D4A445] transition-colors">
@@ -80,9 +71,9 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="mb-4 text-[#D4A445]" style={{ fontFamily: 'var(--font-serif)' }}>
+            <h3 className="text-xl mb-4 text-[#D4A445]" style={{ fontFamily: 'var(--font-serif)' }}>
               Contacto
-            </h4>
+            </h3>
             <ul className="space-y-3" style={{ fontFamily: 'var(--font-sans)' }}>
               <li className="flex items-start gap-2 text-white/80">
                 <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" />

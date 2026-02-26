@@ -7,6 +7,12 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { totalItems, openCart } = useCart();
 
+  function handleContactClick(e: React.MouseEvent) {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    document.getElementById('contacto')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[#D4B888]">
       {/* Main Header */}
@@ -23,19 +29,16 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
-            <a href="#" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
+            <Link to="/" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
               Inicio
-            </a>
-            <a href="#pasteles" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
+            </Link>
+            <Link to="/pasteles" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
               Pasteles
-            </a>
-            <a href="#panaderia" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
+            </Link>
+            <Link to="/panaderia" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
               Panadería
-            </a>
-            <a href="#nosotros" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
-              Sobre Nosotros
-            </a>
-            <a href="#contacto" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
+            </Link>
+            <a href="#contacto" onClick={handleContactClick} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
               Contacto
             </a>
           </nav>
@@ -72,25 +75,16 @@ export function Header() {
         {mobileMenuOpen && (
           <nav className="lg:hidden py-4 border-t border-[#D4B888]">
             <div className="flex flex-col space-y-3">
-              <a href="#" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
+              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
                 Inicio
-              </a>
-              <a href="#pasteles" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
+              </Link>
+              <Link to="/pasteles" onClick={() => setMobileMenuOpen(false)} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
                 Pasteles
-              </a>
-              <a href="#panaderia" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
+              </Link>
+              <Link to="/panaderia" onClick={() => setMobileMenuOpen(false)} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
                 Panadería
-              </a>
-              <a href="#postres" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
-                Postres
-              </a>
-              <a href="#regalos" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
-                Regalos
-              </a>
-              <a href="#nosotros" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
-                Sobre Nosotros
-              </a>
-              <a href="#contacto" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
+              </Link>
+              <a href="#contacto" onClick={handleContactClick} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
                 Contacto
               </a>
             </div>
