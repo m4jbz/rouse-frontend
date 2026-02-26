@@ -22,10 +22,10 @@ export function Hero() {
             Pasteles y panadería artesanal hechos en México
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="bg-[#C8923A] text-white px-8 py-4 hover:bg-[#A67A28] transition-colors duration-300 shadow-lg">
-              Comprar ahora
-            </button>
-            <button className="bg-white/90 text-[#3E2412] px-8 py-4 hover:bg-white transition-colors duration-300 shadow-lg backdrop-blur-sm">
+            <button
+              onClick={() => document.getElementById('productos')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-white/90 text-[#3E2412] px-8 py-4 hover:bg-white transition-colors duration-300 shadow-lg backdrop-blur-sm"
+            >
               Ver catálogo
             </button>
           </div>
