@@ -1,16 +1,25 @@
-import { Search, User, ShoppingCart, Menu } from 'lucide-react';
+import { User, LogOut, ShoppingCart, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import logo from '../../../assets/logo.png'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { totalItems, openCart } = useCart();
+  const { totalItems, openCart, clearCart } = useCart();
+  const { isAuthenticated, user, logout } = useAuth();
 
   function handleContactClick(e: React.MouseEvent) {
     e.preventDefault();
     setMobileMenuOpen(false);
     document.getElementById('contacto')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function handleLogout() {
+    clearCart();
+    logout();
+    setMobileMenuOpen(false);
   }
 
   return (
@@ -21,7 +30,8 @@ export function Header() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/">
-              <h1 className="text-2xl sm:text-3xl text-[#C8923A] mb-0" style={{ fontFamily: 'var(--font-serif)' }}>
+              <img src={logo} alt="logo" className="header-logo" />
+              <h1 className="text-2xl sm:text-3xl text-[#C8923A] mb-0 whitespace-nowrap" style={{ fontFamily: 'var(--font-serif)' }}>
                 Pastelería Rouse
               </h1>
             </Link>
@@ -45,12 +55,24 @@ export function Header() {
 
           {/* Icons */}
           <div className="flex items-center space-x-4">
-            <button className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors">
-              <Search className="w-5 h-5" />
-            </button>
-            <Link to="/login" className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors">
-              <User className="w-5 h-5" />
-            </Link>
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-3">
+                <span className="hidden sm:inline text-sm text-[#3E2412] font-medium" style={{ fontFamily: 'var(--font-sans)' }}>
+                  {user?.name}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors"
+                  title="Cerrar sesión"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors">
+                <User className="w-5 h-5" />
+              </Link>
+            )}
             <button
               onClick={openCart}
               className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors relative"
@@ -87,6 +109,18 @@ export function Header() {
               <a href="#contacto" onClick={handleContactClick} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
                 Contacto
               </a>
+              {isAuthenticated ? (
+                <button
+                  onClick={handleLogout}
+                  className="text-left text-[#A63C2E] hover:text-[#C8923A] transition-colors font-medium py-2"
+                >
+                  Cerrar sesión
+                </button>
+              ) : (
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="text-[#C8923A] hover:text-[#A67A28] transition-colors font-medium py-2">
+                  Iniciar sesión
+                </Link>
+              )}
             </div>
           </nav>
         )}
