@@ -1,4 +1,43 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  type ReactNode,
+} from 'react';
+import { useAuth } from './AuthContext';
+import {
+  fetchServerCart,
+  syncCartToServer,
+  clearServerCart,
+  mergeCartItems,
+} from '@/services/cart';
+
+// ----- Persistencia local -----
+
+const CART_STORAGE_KEY = 'rouse_cart';
+
+function loadCartFromStorage(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCartToStorage(items: CartItem[]): void {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    // localStorage lleno o no disponible — ignorar silenciosamente
+  }
+}
 
 // ----- Tipos -----
 
@@ -57,8 +96,64 @@ export function useCart(): CartContextValue {
 // ----- Provider -----
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const { user, loading: authLoading } = useAuth();
+  const [items, setItems] = useState<CartItem[]>(loadCartFromStorage);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Ref para evitar sincronizar al servidor mientras se hace el merge inicial
+  const initialSyncDone = useRef(false);
+  // Ref para trackear el user id previo y detectar cambios de sesión
+  const prevUserIdRef = useRef<string | null>(null);
+
+  // Persistir en localStorage cada vez que cambie
+  useEffect(() => {
+    saveCartToStorage(items);
+  }, [items]);
+
+  // Cuando el usuario se autentica: fetch del carrito del servidor y merge con el local
+  useEffect(() => {
+    if (authLoading) return;
+
+    const currentUserId = user?.id ?? null;
+    const prevUserId = prevUserIdRef.current;
+    prevUserIdRef.current = currentUserId;
+
+    if (!currentUserId) {
+      // Usuario no autenticado — no sincronizar
+      initialSyncDone.current = false;
+      return;
+    }
+
+    if (currentUserId === prevUserId) {
+      // Mismo usuario, ya sincronizado (ej. re-render sin cambio de sesión)
+      return;
+    }
+
+    // Nuevo login o recarga de página con sesión existente
+    initialSyncDone.current = false;
+
+    fetchServerCart()
+      .then((serverItems) => {
+        setItems((localItems) => {
+          const merged = mergeCartItems(localItems, serverItems);
+          // Sincronizar el resultado mergeado al servidor
+          syncCartToServer(merged).catch(() => {});
+          return merged;
+        });
+      })
+      .catch(() => {
+        // Error de red — usar el carrito local
+      })
+      .finally(() => {
+        initialSyncDone.current = true;
+      });
+  }, [user?.id, authLoading]);
+
+  // Sincronizar al servidor cada vez que cambian los items (si hay sesión activa)
+  useEffect(() => {
+    if (!user || !initialSyncDone.current) return;
+    syncCartToServer(items).catch(() => {});
+  }, [items, user]);
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
@@ -112,7 +207,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     setItems([]);
-  }, []);
+    localStorage.removeItem(CART_STORAGE_KEY);
+    if (user) {
+      clearServerCart().catch(() => {});
+    }
+  }, [user]);
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce(

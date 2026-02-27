@@ -1,5 +1,6 @@
 import { Routes, Route, Link } from 'react-router';
 import { CartProvider } from '@/context/CartContext';
+import { AuthProvider } from '@/context/AuthContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { ProductCard } from './components/ProductCard';
@@ -10,6 +11,10 @@ import { RegisterPage } from './pages/RegisterPage';
 import { CartPage } from './pages/CartPage';
 import { PastelesPage } from './pages/PastelesPage';
 import { PanaderiaPage } from './pages/PanaderiaPage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { BrandStory } from './components/BrandStory';
 import Pastel1 from '../../assets/pastel1.jpg';
 import Pastel2 from '../../assets/pastel2.jpg';
 import Pastel3 from '../../assets/pastel3.jpg';
@@ -111,6 +116,7 @@ function HomePage() {
         </div>
       </section>
 
+      {/* <BrandStory /> */}
       <Footer />
     </div>
   );
@@ -118,15 +124,20 @@ function HomePage() {
 
 export default function App() {
   return (
-    <CartProvider>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/pasteles" element={<PastelesPage />} />
-        <Route path="/panaderia" element={<PanaderiaPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/cart" element={<CartPage />} />
-      </Routes>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/pasteles" element={<PastelesPage />} />
+          <Route path="/panaderia" element={<PanaderiaPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+        </Routes>
+      </CartProvider>
+    </AuthProvider>
   );
 }
