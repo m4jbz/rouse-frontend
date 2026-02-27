@@ -1,6 +1,8 @@
-import { Routes, Route, Link } from 'react-router';
+import { useEffect } from 'react';
+import { Routes, Route, Link, useNavigate } from 'react-router';
 import { CartProvider } from '@/context/CartContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { AdminProvider } from '@/context/AdminContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { ProductCard } from './components/ProductCard';
@@ -14,6 +16,8 @@ import { PanaderiaPage } from './pages/PanaderiaPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { AdminLoginPage } from './pages/AdminLoginPage';
+import { AdminPage } from './pages/AdminPage';
 import { BrandStory } from './components/BrandStory';
 import Pastel1 from '../../assets/pastel1.jpg';
 import Pastel2 from '../../assets/pastel2.jpg';
@@ -122,22 +126,45 @@ function HomePage() {
   );
 }
 
+function AdminShortcutListener({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault();
+        navigate('/admin');
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/pasteles" element={<PastelesPage />} />
-          <Route path="/panaderia" element={<PanaderiaPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-        </Routes>
-      </CartProvider>
+      <AdminProvider>
+        <CartProvider>
+          <AdminShortcutListener>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/pasteles" element={<PastelesPage />} />
+              <Route path="/panaderia" element={<PanaderiaPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin/login" element={<AdminLoginPage />} />
+            </Routes>
+          </AdminShortcutListener>
+        </CartProvider>
+      </AdminProvider>
     </AuthProvider>
   );
 }
