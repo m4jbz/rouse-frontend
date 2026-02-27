@@ -1,10 +1,20 @@
+import { Routes, Route, Link } from 'react-router';
+import { CartProvider } from '@/context/CartContext';
+import { AuthProvider } from '@/context/AuthContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
-import { CategoryCard } from './components/CategoryCard';
 import { ProductCard } from './components/ProductCard';
-import { BrandStory } from './components/BrandStory';
-import { Newsletter } from './components/Newsletter';
 import { Footer } from './components/Footer';
+import { CartDrawer } from './components/CartDrawer';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { CartPage } from './pages/CartPage';
+import { PastelesPage } from './pages/PastelesPage';
+import { PanaderiaPage } from './pages/PanaderiaPage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { BrandStory } from './components/BrandStory';
 import Pastel1 from '../../assets/pastel1.jpg';
 import Pastel2 from '../../assets/pastel2.jpg';
 import Pastel3 from '../../assets/pastel3.jpg';
@@ -16,55 +26,63 @@ import Pastel8 from '../../assets/pastel8.jpg';
 
 const featuredProducts = [
   {
-    name: 'Pastel Tres Leches Clásico',
+    id: 'tres-leches-clasico',
+    name: 'Pastel de 2 Pisos Boda',
     price: 450,
     image: Pastel1,
-    badge: 'Más vendido' as const
   },
   {
-    name: 'Chocolate Artesanal Premium',
+    id: 'chocolate-premium',
+    name: 'Pastel de Cumpleaños Sencillo',
     price: 520,
     image: Pastel2,
     badge: 'Más vendido' as const
   },
   {
-    name: 'Conchas Tradicionales (6 pzas)',
+    id: 'conchas-tradicionales',
+    name: 'Pastel de año nuevo',
     price: 85,
     image: Pastel3,
   },
   {
-    name: 'Flan Napolitano',
+    id: 'flan-napolitano',
+    name: 'Pastel de Cumpleaños 2 Pisos',
     price: 280,
     image: Pastel4,
-    badge: 'Nuevo' as const
   },
   {
-    name: 'Churros Rellenos (6 pzas)',
+    id: 'churros-rellenos',
+    name: 'Pastel de 15 años',
     price: 120,
     image: Pastel5,
   },
   {
-    name: 'Pastel de Fresa Elegante',
+    id: 'pastel-fresa',
+    name: 'Pastel de Durazno',
     price: 490,
     image: Pastel6,
+    badge: 'Nuevo' as const
   },
   {
-    name: 'Cupcakes Vainilla (6 pzas)',
+    id: 'cupcakes-vainilla',
+    name: 'Pastel de 3 Leches Clasico',
     price: 180,
     image: Pastel7,
+    badge: 'Más vendido' as const
   },
   {
-    name: 'Pan Dulce Surtido (12 pzas)',
+    id: 'pan-dulce-surtido',
+    name: 'Pastel de Navidad',
     price: 150,
     image: Pastel8,
-    badge: 'Edición limitada' as const
   }
 ];
 
-export default function App() {
+function HomePage() {
   return (
     <div className="min-h-screen">
       <Header />
+      <CartDrawer />
       <Hero />
 
       {/* Featured Products Section */}
@@ -79,9 +97,10 @@ export default function App() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product, index) => (
+            {featuredProducts.map((product) => (
               <ProductCard
-                key={index}
+                key={product.id}
+                id={product.id}
                 name={product.name}
                 price={product.price}
                 image={product.image}
@@ -90,14 +109,35 @@ export default function App() {
             ))}
           </div>
           <div className="text-center mt-12">
-            <button className="bg-[#C8923A] text-white px-10 py-4 hover:bg-[#A67A28] transition-colors duration-300 shadow-md">
+            <Link to="/pasteles" className="inline-block bg-[#C8923A] text-white px-10 py-4 hover:bg-[#A67A28] transition-colors duration-300 shadow-md">
               Ver todos los productos
-            </button>
+            </Link>
           </div>
         </div>
       </section>
 
+      {/* <BrandStory /> */}
       <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <CartProvider>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/pasteles" element={<PastelesPage />} />
+          <Route path="/panaderia" element={<PanaderiaPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+        </Routes>
+      </CartProvider>
+    </AuthProvider>
   );
 }
