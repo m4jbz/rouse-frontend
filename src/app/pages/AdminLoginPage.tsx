@@ -29,11 +29,42 @@ export function AdminLoginPage() {
     <div style={{
       minHeight: '100vh',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: 'column',
       background: '#f3f4f6',
       fontFamily: 'system-ui, sans-serif',
     }}>
+      {/* Header */}
+      <div style={{
+        background: '#3E2412',
+        color: '#fff',
+        padding: '1rem 2rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        <span style={{ fontWeight: 600, fontSize: '1.125rem' }}>Pastelería Rouse</span>
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            padding: '0.375rem 0.75rem',
+            background: 'transparent',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.3)',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '0.8125rem',
+          }}
+        >
+          Ir al sitio
+        </button>
+      </div>
+
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
       <form
         onSubmit={handleSubmit}
         style={{
@@ -123,6 +154,7 @@ export function AdminLoginPage() {
           {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
         </button>
       </form>
+      </div>
     </div>
   );
 }
