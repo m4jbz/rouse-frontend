@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { Mail, Lock, Eye, EyeOff, User, Phone } from 'lucide-react';
-import { register, type RegisterData } from '@/services/auth';
+import { register, type RegisterData, type AuthError } from '@/services/auth';
 
 interface FormErrors {
   name?: string;
@@ -13,8 +13,6 @@ interface FormErrors {
 }
 
 export function RegisterPage() {
-  const navigate = useNavigate();
-
   const [formData, setFormData] = useState<RegisterData>({
     name: '',
     email: '',
@@ -26,6 +24,7 @@ export function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [success, setSuccess] = useState(false);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -83,13 +82,13 @@ export function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const response = await register(formData);
-      console.log('[RegisterPage] Registrado:', response.user.email);
-      // TODO: Guardar token y redirigir
-      navigate('/login');
-    } catch (err) {
-      setErrors({ general: 'Ocurrió un error al crear la cuenta. Inténtalo de nuevo.' });
-      console.error('[RegisterPage] Error:', err);
+      await register(formData);
+      setSuccess(true);
+    } catch (err: unknown) {
+      const apiError = err as AuthError;
+      setErrors({
+        general: apiError?.detail || 'Ocurrió un error al crear la cuenta. Inténtalo de nuevo.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +100,55 @@ export function RegisterPage() {
       <p className="mt-1 text-sm text-[#A63C2E]" style={{ fontFamily: 'var(--font-sans)' }}>
         {errors[field]}
       </p>
+    );
+  }
+
+  // Show success screen after registration
+  if (success) {
+    return (
+      <div className="min-h-screen bg-[#F0E0C8] flex flex-col">
+        <header className="py-6 text-center">
+          <Link to="/">
+            <h1
+              className="text-3xl text-[#C8923A] cursor-pointer hover:opacity-80 transition-opacity"
+              style={{ fontFamily: 'var(--font-serif)' }}
+            >
+              Pastelería Rouse
+            </h1>
+          </Link>
+        </header>
+        <main className="flex-1 flex items-center justify-center px-4 pb-16">
+          <div className="w-full max-w-md">
+            <div className="bg-[#FAF4EB] rounded-xl border border-[#D4B888] shadow-lg p-8 text-center">
+              <div className="mb-6">
+                <Mail className="w-16 h-16 mx-auto text-[#C8923A]" />
+              </div>
+              <h2
+                className="text-2xl text-[#3E2412] mb-4"
+                style={{ fontFamily: 'var(--font-serif)' }}
+              >
+                Revisa tu correo
+              </h2>
+              <p
+                className="text-[#6B4422] mb-6"
+                style={{ fontFamily: 'var(--font-sans)' }}
+              >
+                Hemos enviado un enlace de verificación a{' '}
+                <strong className="text-[#3E2412]">{formData.email}</strong>.
+                <br />
+                Haz clic en el enlace para activar tu cuenta.
+              </p>
+              <Link
+                to="/login"
+                className="inline-block bg-[#C8923A] text-white px-8 py-3 hover:bg-[#A67A28] transition-colors duration-300 shadow-md font-medium rounded-md"
+                style={{ fontFamily: 'var(--font-sans)' }}
+              >
+                Ir a iniciar sesión
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
     );
   }
 

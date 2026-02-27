@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { login, type LoginCredentials } from '@/services/auth';
+import { useAuth } from '@/context/AuthContext';
+import { resendVerification, type LoginCredentials, type AuthError } from '@/services/auth';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState<LoginCredentials>({
     email: '',
@@ -13,16 +15,21 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (error) setError('');
+    if (showResendVerification) setShowResendVerification(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setShowResendVerification(false);
+    setResendMessage('');
 
     if (!formData.email || !formData.password) {
       setError('Por favor, completa todos los campos.');
@@ -32,15 +39,29 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await login(formData);
-      console.log('[LoginPage] Autenticado:', response.user.email);
-      // TODO: Guardar token y redirigir al dashboard/perfil
+      await login(formData);
       navigate('/');
-    } catch (err) {
-      setError('Credenciales incorrectas. Inténtalo de nuevo.');
-      console.error('[LoginPage] Error:', err);
+    } catch (err: unknown) {
+      const apiError = err as AuthError;
+      const detail = apiError?.detail || 'Credenciales incorrectas. Inténtalo de nuevo.';
+      setError(detail);
+
+      // If the error is about email verification, show resend option
+      if (detail.toLowerCase().includes('verificar')) {
+        setShowResendVerification(true);
+      }
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleResendVerification() {
+    try {
+      const response = await resendVerification(formData.email);
+      setResendMessage(response.message);
+      setShowResendVerification(false);
+    } catch {
+      setResendMessage('Error al reenviar el correo de verificación.');
     }
   }
 
@@ -82,6 +103,22 @@ export function LoginPage() {
             {error && (
               <div className="mb-6 p-3 rounded-md bg-[#A63C2E]/10 border border-[#A63C2E]/30 text-[#A63C2E] text-sm text-center" style={{ fontFamily: 'var(--font-sans)' }}>
                 {error}
+                {showResendVerification && (
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    className="block mx-auto mt-2 text-[#C8923A] hover:text-[#A67A28] underline font-medium"
+                  >
+                    Reenviar correo de verificación
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Resend success message */}
+            {resendMessage && (
+              <div className="mb-6 p-3 rounded-md bg-green-100 border border-green-300 text-green-800 text-sm text-center" style={{ fontFamily: 'var(--font-sans)' }}>
+                {resendMessage}
               </div>
             )}
 
@@ -148,13 +185,13 @@ export function LoginPage() {
 
               {/* Olvidé mi contraseña */}
               <div className="text-right">
-                <a
-                  href="#"
+                <Link
+                  to="/forgot-password"
                   className="text-sm text-[#C8923A] hover:text-[#A67A28] transition-colors"
                   style={{ fontFamily: 'var(--font-sans)' }}
                 >
                   ¿Olvidaste tu contraseña?
-                </a>
+                </Link>
               </div>
 
               {/* Submit */}

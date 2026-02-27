@@ -61,7 +61,7 @@ export function CartPage() {
                 Explora nuestro catalogo y encuentra algo delicioso
               </p>
               <Link
-                to="/"
+                to="/#top"
                 className="inline-block bg-[#C8923A] text-white px-8 py-3 hover:bg-[#A67A28] transition-colors duration-300 shadow-md rounded-md font-medium"
                 style={{ fontFamily: 'var(--font-sans)' }}
               >
@@ -182,7 +182,7 @@ export function CartPage() {
                   </button>
 
                   <Link
-                    to="/"
+                    to="/#top"
                     className="block text-center mt-4 text-sm text-[#C8923A] hover:text-[#A67A28] transition-colors"
                     style={{ fontFamily: 'var(--font-sans)' }}
                   >
