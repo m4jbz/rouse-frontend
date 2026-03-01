@@ -35,6 +35,7 @@ export interface Variant {
   id: number;
   name: string;
   price: number;
+  image_path: string | null;
 }
 
 export interface Product {
@@ -233,14 +234,14 @@ export async function deleteProduct(id: number): Promise<void> {
 
 // ----- Variant CRUD -----
 
-export async function createVariant(productId: number, data: { name: string; price: number }): Promise<Variant> {
+export async function createVariant(productId: number, data: { name: string; price: number, image_path: string }): Promise<Variant> {
   return adminApiFetchAuth<Variant>(`/products/${productId}/variants`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export async function updateVariant(productId: number, variantId: number, data: { name?: string; price?: number }): Promise<Variant> {
+export async function updateVariant(productId: number, variantId: number, data: { name?: string; price?: number, image_path?: string}): Promise<Variant> {
   return adminApiFetchAuth<Variant>(`/products/${productId}/variants/${variantId}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -251,4 +252,43 @@ export async function deleteVariant(productId: number, variantId: number): Promi
   return adminApiFetchAuth<void>(`/products/${productId}/variants/${variantId}`, {
     method: 'DELETE',
   });
+}
+
+// ----- Public product fetching (for storefront pages) -----
+
+export interface DisplayVariant {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  categoryId: number;
+}
+
+export function flattenToVariants(products: Product[]): DisplayVariant[] {
+  const result: DisplayVariant[] = [];
+  for (const product of products) {
+    for (const variant of product.variants) {
+      result.push({
+        id: `p${product.id}-v${variant.id}`,
+        name: variant.name,
+        price: Number(variant.price),
+        image: variant.image_path ? `${variant.image_path}` : '',
+        categoryId: product.category_id,
+      });
+    }
+  }
+  return result;
+}
+
+export async function fetchActiveProducts(): Promise<Product[]> {
+  return adminApiFetch<Product[]>('/products/?active_only=true');
+}
+
+export async function fetchProductsByCategory(categoryId: number): Promise<Product[]> {
+  return adminApiFetch<Product[]>(`/products/?category_id=${categoryId}&active_only=true`);
+}
+
+export async function fetchProductsByCategories(categoryIds: number[]): Promise<Product[]> {
+  const results = await Promise.all(categoryIds.map(id => fetchProductsByCategory(id)));
+  return results.flat();
 }
