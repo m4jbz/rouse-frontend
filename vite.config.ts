@@ -6,8 +6,11 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   server: {
     allowedHosts: [
-      '7e7a-201-162-187-90.ngrok-free.app'
-    ]
+      'dd16-2806-104e-4-b68a-00-2.ngrok-free.app'
+    ],
+    host: "0.0.0.0",
+    port: 5173,
+    strictPort: true
   },
   plugins: [
     // The React and Tailwind plugins are both required for Make, even if
