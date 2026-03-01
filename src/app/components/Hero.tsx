@@ -1,5 +1,5 @@
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import HeroBg from '../../../assets/fondo.jpg';
+import HeroBg from '../../../assets/images/fondo.jpg';
 
 export function Hero() {
   return (
