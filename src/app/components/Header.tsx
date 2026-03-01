@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import logo from '../../../assets/logo.png'
+import logo from '../../../assets/images/logo.png'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -31,7 +31,7 @@ export function Header() {
           <div className="flex-shrink-0">
             <Link to="/">
               <img src={logo} alt="logo" className="header-logo" />
-              <h1 className="text-2xl sm:text-3xl text-[#C8923A] mb-0 whitespace-nowrap" style={{ fontFamily: 'var(--font-serif)' }}>
+              <h1 id='header-business-name' className="text-2xl sm:text-3xl text-[#C8923A] mb-0" style={{ fontFamily: 'var(--font-serif)' }}>
                 Pastelería Rouse
               </h1>
             </Link>
@@ -47,6 +47,9 @@ export function Header() {
             </Link>
             <Link to="/panaderia" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
               Panadería
+            </Link>
+            <Link to="/postres" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
+              Postres
             </Link>
             <a href="#contacto" onClick={handleContactClick} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
               Contacto
@@ -105,6 +108,9 @@ export function Header() {
               </Link>
               <Link to="/panaderia" onClick={() => setMobileMenuOpen(false)} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
                 Panadería
+              </Link>
+              <Link to="/postres" onClick={() => setMobileMenuOpen(false)} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
+                Postres
               </Link>
               <a href="#contacto" onClick={handleContactClick} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
                 Contacto
