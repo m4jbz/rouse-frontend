@@ -11,6 +11,7 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 5173,
     strictPort: true
+
   },
   plugins: [
     // The React and Tailwind plugins are both required for Make, even if
