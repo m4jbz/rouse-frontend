@@ -95,6 +95,14 @@ async function apiFetch<T>(
         .join('. ');
     }
 
+    if (errorData.detail === 'value is not a valid phone number') {
+      errorData.detail = 'El número de teléfono no es válido.';
+    }
+
+    if (errorData.detail === 'Email already registered') {
+      errorData.detail = 'El correo electrónico ya está registrado.';
+    }
+
     throw errorData;
   }
 
