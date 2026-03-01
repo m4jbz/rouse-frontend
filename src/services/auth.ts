@@ -87,6 +87,14 @@ async function apiFetch<T>(
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({ detail: 'Error de conexión con el servidor.' }));
+
+    // FastAPI 422 returns detail as an array of objects — normalize to string
+    if (Array.isArray(errorData.detail)) {
+      errorData.detail = errorData.detail
+        .map((e: { msg?: string }) => e.msg || 'Error de validación')
+        .join('. ');
+    }
+
     throw errorData;
   }
 
