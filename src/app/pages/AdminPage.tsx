@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, SubmitEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useAdmin } from '@/context/AdminContext';
 import {
@@ -175,7 +175,7 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
 
   function clearMessages() { setError(''); setSuccess(''); }
 
-  async function handleCreate(e: FormEvent) {
+  async function handleCreate(e: SubmitEvent) {
     e.preventDefault();
     clearMessages();
     try {
@@ -196,7 +196,7 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
     clearMessages();
   }
 
-  async function handleUpdate(e: FormEvent) {
+  async function handleUpdate(e: SubmitEvent) {
     e.preventDefault();
     if (editId === null) return;
     clearMessages();
@@ -319,19 +319,22 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
   const [showForm, setShowForm] = useState(false);
   const [vName, setVName] = useState('');
   const [vPrice, setVPrice] = useState('');
+  const [vImagePath, setVImagePath] = useState('');
   const [editVId, setEditVId] = useState<number | null>(null);
   const [editVName, setEditVName] = useState('');
   const [editVPrice, setEditVPrice] = useState('');
+  const [editVImagePath, setEditVImagePath] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [error, setError] = useState('');
 
-  async function handleCreateVariant(e: FormEvent) {
+  async function handleCreateVariant(e: SubmitEvent) {
     e.preventDefault();
     setError('');
     try {
-      await createVariant(product.id, { name: vName, price: parseFloat(vPrice) });
+      await createVariant(product.id, { name: vName, price: parseFloat(vPrice), image_path: vImagePath });
       setVName('');
       setVPrice('');
+      setVImagePath('');
       setShowForm(false);
       onRefresh();
     } catch (err: any) {
@@ -339,12 +342,12 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
     }
   }
 
-  async function handleUpdateVariant(e: FormEvent) {
+  async function handleUpdateVariant(e: SubmitEvent) {
     e.preventDefault();
     if (editVId === null) return;
     setError('');
     try {
-      await updateVariant(product.id, editVId, { name: editVName, price: parseFloat(editVPrice) });
+      await updateVariant(product.id, editVId, { name: editVName, price: parseFloat(editVPrice), image_path: editVImagePath });
       setEditVId(null);
       onRefresh();
     } catch (err: any) {
@@ -382,6 +385,7 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
         <form onSubmit={handleCreateVariant} style={{ display: 'flex', gap: '0.375rem', marginBottom: '0.375rem', alignItems: 'flex-end' }}>
           <input style={{ ...styles.input, width: '120px' }} placeholder="Nombre" value={vName} onChange={e => setVName(e.target.value)} required />
           <input style={{ ...styles.input, width: '80px' }} placeholder="Precio" type="number" step="0.01" min="0.01" value={vPrice} onChange={e => setVPrice(e.target.value)} required />
+          <input style={{ ...styles.input, width: '200px' }} placeholder="Ruta imagen" value={vImagePath} onChange={e => setVImagePath(e.target.value)} />
           <button type="submit" style={{ ...styles.btnSmall, background: '#16a34a', color: '#fff' }}>Crear</button>
         </form>
       )}
@@ -392,6 +396,7 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
             <tr>
               <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Nombre</th>
               <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Precio</th>
+              <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Imagen</th>
               <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Acciones</th>
             </tr>
           </thead>
@@ -407,6 +412,9 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
                       <input style={{ ...styles.input, width: '70px' }} type="number" step="0.01" value={editVPrice} onChange={e => setEditVPrice(e.target.value)} />
                     </td>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
+                      <input style={{ ...styles.input, width: '70px' }} type="text" value={editVImagePath} onChange={e => setEditVImagePath(e.target.value)} />
+                    </td>
+                    <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
                       <span style={{ display: 'flex', gap: '0.25rem' }}>
                         <button style={{ ...styles.btnSmall, background: '#16a34a', color: '#fff' }} onClick={handleUpdateVariant as any}>Ok</button>
                         <button style={{ ...styles.btnSmall, background: '#6b7280', color: '#fff' }} onClick={() => setEditVId(null)}>X</button>
@@ -417,11 +425,12 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
                   <>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>{v.name}</td>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>${v.price}</td>
+                    <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>{v.image_path}</td>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
                       <span style={{ display: 'flex', gap: '0.25rem' }}>
                         <button
                           style={{ ...styles.btnSmall, background: '#3E2412', color: '#fff' }}
-                          onClick={() => { setEditVId(v.id); setEditVName(v.name); setEditVPrice(String(v.price)); }}
+                          onClick={() => { setEditVId(v.id); setEditVName(v.name); setEditVPrice(String(v.price)); setEditVImagePath(v.image_path); }}
                         >Ed</button>
                         {isAdmin && (
                           deleteConfirm === v.id ? (
@@ -498,7 +507,7 @@ function ProductsTab({ isAdmin }: { isAdmin: boolean }) {
     return categories.find(c => c.id === catId)?.name || `ID ${catId}`;
   }
 
-  async function handleCreate(e: FormEvent) {
+  async function handleCreate(e: SubmitEvent) {
     e.preventDefault();
     clearMessages();
     try {
@@ -527,7 +536,7 @@ function ProductsTab({ isAdmin }: { isAdmin: boolean }) {
     clearMessages();
   }
 
-  async function handleUpdate(e: FormEvent) {
+  async function handleUpdate(e: SubmitEvent) {
     e.preventDefault();
     if (editId === null) return;
     clearMessages();
@@ -687,7 +696,7 @@ function ProductsTab({ isAdmin }: { isAdmin: boolean }) {
                   </tr>
                   {expandedId === prod.id && (
                     <tr key={`${prod.id}-variants`}>
-                      <td colSpan={7} style={{ padding: '0.5rem 0.75rem', background: '#fafafa' }}>
+                      <td colSpan={8} style={{ padding: '0.5rem 0.75rem', background: '#fafafa' }}>
                         <VariantSection product={prod} isAdmin={isAdmin} onRefresh={load} />
                       </td>
                     </tr>

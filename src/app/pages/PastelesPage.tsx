@@ -1,139 +1,57 @@
-import { Link } from 'react-router';
+import { useState, useEffect } from 'react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { CartDrawer } from '../components/CartDrawer';
 import { ProductCard } from '../components/ProductCard';
-import Pastel1 from '../../../assets/pastel1.jpg';
-import Pastel2 from '../../../assets/pastel2.jpg';
-import Pastel3 from '../../../assets/pastel3.jpg';
-import Pastel4 from '../../../assets/pastel4.jpg';
-import Pastel5 from '../../../assets/pastel5.jpg';
-import Pastel6 from '../../../assets/pastel6.jpg';
-import Pastel7 from '../../../assets/pastel7.jpg';
-import Pastel8 from '../../../assets/pastel8.jpg';
+import {
+  fetchProductsByCategories,
+  flattenToVariants,
+  listCategories,
+  type Product,
+  type Category,
+  type DisplayVariant,
+} from '@/services/admin';
 
-const pasteles = [
-  // Productos reales
-  {
-    id: 'pastel-boda-2pisos',
-    name: 'Pastel de 2 Pisos Boda',
-    price: 450,
-    image: Pastel1,
-  },
-  {
-    id: 'pastel-cumple-sencillo',
-    name: 'Pastel de Cumpleaños Sencillo',
-    price: 520,
-    image: Pastel2,
-    badge: 'Más vendido' as const,
-  },
-  {
-    id: 'pastel-ano-nuevo',
-    name: 'Pastel de Año Nuevo',
-    price: 85,
-    image: Pastel3,
-  },
-  {
-    id: 'pastel-cumple-2pisos',
-    name: 'Pastel de Cumpleaños 2 Pisos',
-    price: 280,
-    image: Pastel4,
-  },
-  {
-    id: 'pastel-15-anos',
-    name: 'Pastel de 15 Años',
-    price: 120,
-    image: Pastel5,
-  },
-  {
-    id: 'pastel-durazno',
-    name: 'Pastel de Durazno',
-    price: 490,
-    image: Pastel6,
-    badge: 'Nuevo' as const,
-  },
-  {
-    id: 'pastel-3leches',
-    name: 'Pastel de 3 Leches Clásico',
-    price: 180,
-    image: Pastel7,
-    badge: 'Más vendido' as const,
-  },
-  {
-    id: 'pastel-navidad',
-    name: 'Pastel de Navidad',
-    price: 150,
-    image: Pastel8,
-  },
-  // Productos dummy adicionales
-  {
-    id: 'pastel-chocolate-intenso',
-    name: 'Pastel de Chocolate Intenso',
-    price: 380,
-    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&h=600&fit=crop',
-    badge: 'Nuevo' as const,
-  },
-  {
-    id: 'pastel-fresas-crema',
-    name: 'Pastel de Fresas con Crema',
-    price: 420,
-    image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=600&h=600&fit=crop',
-  },
-  {
-    id: 'pastel-red-velvet',
-    name: 'Pastel Red Velvet',
-    price: 550,
-    image: 'https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?w=600&h=600&fit=crop',
-    badge: 'Más vendido' as const,
-  },
-  {
-    id: 'pastel-zanahoria',
-    name: 'Pastel de Zanahoria',
-    price: 320,
-    image: 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=600&h=600&fit=crop',
-  },
-  {
-    id: 'pastel-vainilla-clasico',
-    name: 'Pastel de Vainilla Clásico',
-    price: 290,
-    image: 'https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?w=600&h=600&fit=crop',
-  },
-  {
-    id: 'pastel-fondant-personalizado',
-    name: 'Pastel Fondant Personalizado',
-    price: 850,
-    image: 'https://images.unsplash.com/photo-1535254973040-607b474cb50d?w=600&h=600&fit=crop',
-    badge: 'Edición limitada' as const,
-  },
-  {
-    id: 'pastel-moka',
-    name: 'Pastel de Moka',
-    price: 360,
-    image: 'https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?w=600&h=600&fit=crop',
-  },
-  {
-    id: 'pastel-limon',
-    name: 'Pastel de Limón',
-    price: 310,
-    image: 'https://images.unsplash.com/photo-1519869325930-281384f7f637?w=600&h=600&fit=crop',
-    badge: 'Nuevo' as const,
-  },
-];
+const CATEGORY_IDS = [1, 2];
 
 export function PastelesPage() {
+  const [allVariants, setAllVariants] = useState<DisplayVariant[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetchProductsByCategories(CATEGORY_IDS),
+      listCategories(),
+    ])
+      .then(([products, cats]) => {
+        setAllVariants(flattenToVariants(products));
+        setCategories(cats.filter(c => CATEGORY_IDS.includes(c.id)));
+      })
+      .catch(() => {
+        setAllVariants([]);
+        setCategories([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = selectedCategory
+    ? allVariants.filter(v => v.categoryId === selectedCategory)
+    : allVariants;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <CartDrawer />
 
-      {/* Hero de sección - estilo Porto's */}
+      {/* Hero de sección */}
       <section className="relative h-[340px] sm:h-[400px] lg:h-[450px] overflow-hidden">
         <img
-          src="https://cdn.shopify.com/s/files/1/0007/2164/9722/files/Shopy_By_Holiday_-_Desktop_1.png?v=1762288002"
+          src="/assets/images/fondo_pasteles.png"
           alt="Variedad de pasteles artesanales"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Sin overlay full, el fondo va en el contenedor del texto */}
         <div className="relative h-full flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8">
           <div className="bg-white/75 px-10 py-6 flex flex-col items-center">
             <h1
@@ -156,27 +74,62 @@ export function PastelesPage() {
       {/* Grid de productos */}
       <main className="flex-1 bg-[#F5EDE0] py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-10">
+          {/* Filter bar */}
+          <div className="flex items-center justify-between mb-10 flex-wrap gap-4">
             <p
               className="text-[#6B4422]"
               style={{ fontFamily: 'var(--font-sans)' }}
             >
-              {pasteles.length} productos
+              {loading ? 'Cargando...' : `${filtered.length} productos`}
             </p>
+
+            {!loading && categories.length > 0 && (
+              <div className="flex items-center gap-3">
+                <span
+                  className="text-sm font-bold text-[#3E2412] tracking-wide uppercase"
+                  style={{ fontFamily: 'var(--font-sans)' }}
+                >
+                  Filtrar por:
+                </span>
+                <select
+                  value={selectedCategory ?? ''}
+                  onChange={e => setSelectedCategory(e.target.value ? Number(e.target.value) : null)}
+                  className="bg-white border-2 border-[#3E2412] text-[#3E2412] text-sm font-semibold px-4 py-2 pr-8 uppercase tracking-wide cursor-pointer appearance-none"
+                  style={{
+                    fontFamily: 'var(--font-sans)',
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%233E2412' d='M2 4l4 4 4-4'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 10px center',
+                  }}
+                >
+                  <option value="">TODOS</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name.toUpperCase()}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {pasteles.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                price={product.price}
-                image={product.image}
-                badge={product.badge}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <p className="text-center text-[#6B4422]" style={{ fontFamily: 'var(--font-sans)' }}>Cargando productos...</p>
+          ) : filtered.length === 0 ? (
+            <p className="text-center text-[#6B4422] py-12" style={{ fontFamily: 'var(--font-sans)' }}>
+              No hay pasteles disponibles por el momento.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {filtered.map((variant) => (
+                <ProductCard
+                  key={variant.id}
+                  id={variant.id}
+                  name={variant.name}
+                  price={variant.price}
+                  image={variant.image}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
