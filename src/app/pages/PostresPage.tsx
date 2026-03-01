@@ -12,9 +12,9 @@ import {
   type DisplayVariant,
 } from '@/services/admin';
 
-const CATEGORY_IDS = [3];
+const CATEGORY_IDS = [4, 5, 6];
 
-export function PanaderiaPage() {
+export function PostresPage() {
   const [allVariants, setAllVariants] = useState<DisplayVariant[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -48,8 +48,8 @@ export function PanaderiaPage() {
       {/* Hero de sección */}
       <section className="relative h-[340px] sm:h-[400px] lg:h-[450px] overflow-hidden">
         <img
-          src="/assets/images/fondo-panes.jpg"
-          alt="Pan artesanal recién horneado"
+          src="/assets/images/fondo-postres.jpg"
+          alt="Variedad de postres artesanales"
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="relative h-full flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8">
@@ -58,13 +58,14 @@ export function PanaderiaPage() {
               className="text-4xl sm:text-5xl lg:text-6xl text-[#3E2412] mb-4"
               style={{ fontFamily: 'var(--font-serif)' }}
             >
-              Nuestra Panadería
+              Nuestros Postres
             </h1>
             <p
               className="text-lg sm:text-xl text-[#6B4422] max-w-2xl mx-auto"
               style={{ fontFamily: 'var(--font-sans)' }}
             >
-              Pan artesanal horneado diariamente con recetas tradicionales mexicanas.
+              Gelatinas, cupcakes, galletas y más.{' '}
+              <strong>Postres artesanales para endulzar tu día.</strong>
             </p>
           </div>
         </div>
@@ -114,7 +115,7 @@ export function PanaderiaPage() {
             <p className="text-center text-[#6B4422]" style={{ fontFamily: 'var(--font-sans)' }}>Cargando productos...</p>
           ) : filtered.length === 0 ? (
             <p className="text-center text-[#6B4422] py-12" style={{ fontFamily: 'var(--font-sans)' }}>
-              Próximamente agregaremos productos de panadería. ¡Vuelve pronto!
+              Próximamente agregaremos postres. ¡Vuelve pronto!
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">

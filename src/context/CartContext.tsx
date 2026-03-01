@@ -11,8 +11,6 @@ import { useAuth } from './AuthContext';
 import {
   fetchServerCart,
   syncCartToServer,
-  clearServerCart,
-  mergeCartItems,
 } from '@/services/cart';
 
 // ----- Persistencia local -----
@@ -110,7 +108,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     saveCartToStorage(items);
   }, [items]);
 
-  // Cuando el usuario se autentica: fetch del carrito del servidor y merge con el local
+  // Cuando el usuario se autentica: cargar el carrito del servidor (sin merge con el local)
   useEffect(() => {
     if (authLoading) return;
 
@@ -134,15 +132,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     fetchServerCart()
       .then((serverItems) => {
-        setItems((localItems) => {
-          const merged = mergeCartItems(localItems, serverItems);
-          // Sincronizar el resultado mergeado al servidor
-          syncCartToServer(merged).catch(() => {});
-          return merged;
-        });
+        // Reemplazar el carrito local con el del servidor (sin merge)
+        setItems(serverItems);
       })
       .catch(() => {
-        // Error de red — usar el carrito local
+        // Error de red — limpiar el carrito local para no mostrar datos ajenos
+        setItems([]);
       })
       .finally(() => {
         initialSyncDone.current = true;
@@ -208,10 +203,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(() => {
     setItems([]);
     localStorage.removeItem(CART_STORAGE_KEY);
-    if (user) {
-      clearServerCart().catch(() => {});
-    }
-  }, [user]);
+  }, []);
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce(

@@ -214,3 +214,13 @@
   float: left;
 }
 }
+
+#header-business-name {
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 640px) {
+  #header-business-name {
+    white-space: normal;
+  }
+}
