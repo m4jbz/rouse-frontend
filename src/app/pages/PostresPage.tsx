@@ -12,7 +12,7 @@ import {
   type DisplayVariant,
 } from '@/services/admin';
 
-const CATEGORY_IDS = [4, 5, 6];
+const CATEGORY_IDS = [4, 5, 6, 7, 8, 9];
 
 export function PostresPage() {
   const [allVariants, setAllVariants] = useState<DisplayVariant[]>([]);
