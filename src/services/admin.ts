@@ -1,7 +1,3 @@
-// ============================================================
-// Admin Service — Auth + CRUD API calls for admin panel
-// ============================================================
-
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // ----- Types -----
@@ -106,7 +102,7 @@ async function adminApiFetch<T>(
   return res.json();
 }
 
-async function adminApiFetchAuth<T>(
+export async function adminApiFetchAuth<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {

@@ -1,4 +1,4 @@
-import { User, LogOut, ShoppingCart, Menu } from 'lucide-react';
+import { User, LogOut, ShoppingCart, Menu, ClipboardList } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useCart } from '@/context/CartContext';
@@ -63,10 +63,17 @@ export function Header() {
                 <span className="hidden sm:inline text-sm text-[#3E2412] font-medium" style={{ fontFamily: 'var(--font-sans)' }}>
                   {user?.name}
                 </span>
+                <Link
+                  to="/mis-pedidos"
+                  className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors"
+                  title="Mis pedidos"
+                >
+                  <ClipboardList className="w-5 h-5" />
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="p-2 text-[#3E2412] hover:text-[#C8923A] transition-colors"
-                  title="Cerrar sesión"
+                  title="Cerrar sesion"
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
@@ -116,12 +123,17 @@ export function Header() {
                 Contacto
               </a>
               {isAuthenticated ? (
-                <button
-                  onClick={handleLogout}
-                  className="text-left text-[#A63C2E] hover:text-[#C8923A] transition-colors font-medium py-2"
-                >
-                  Cerrar sesión
-                </button>
+                <>
+                  <Link to="/mis-pedidos" onClick={() => setMobileMenuOpen(false)} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
+                    Mis pedidos
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="text-left text-[#A63C2E] hover:text-[#C8923A] transition-colors font-medium py-2"
+                  >
+                    Cerrar sesion
+                  </button>
+                </>
               ) : (
                 <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="text-[#C8923A] hover:text-[#A67A28] transition-colors font-medium py-2">
                   Iniciar sesión

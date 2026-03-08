@@ -32,7 +32,7 @@ export function ProductCard({ id, image, name, price, badge }: ProductCardProps)
 
   return (
     <div className="group bg-white shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-      <div className="relative aspect-square overflow-hidden bg-[#EAD5B8]/30">
+      <div className="relative  aspect-[1] overflow-hidden bg-[#EAD5B8]/30">
         {badge && (
           <div className={`absolute top-3 left-3 px-3 py-1 text-xs z-10 ${badgeColors[badge]}`}>
             {badge}

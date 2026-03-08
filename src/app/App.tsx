@@ -19,6 +19,9 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { AdminLoginPage } from './pages/AdminLoginPage';
 import { AdminPage } from './pages/AdminPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
+import { MyOrdersPage } from './pages/MyOrdersPage';
 import { BrandStory } from './components/BrandStory';
 import { fetchActiveProducts, flattenToVariants, type DisplayVariant } from '@/services/admin';
 
@@ -30,9 +33,9 @@ function HomePage() {
     fetchActiveProducts()
       .then((data) => {
         // Show variants from categories 1 and 2 (pasteles), limited to first 8
-        const filtered = data.filter(p => p.category_id === 1 || p.category_id === 2);
+        const filtered = data.filter(p => p.category_id === 1 || p.category_id === 2 || p.category_id === 3);
         const allVariants = flattenToVariants(filtered);
-        setVariants(allVariants.slice(0, 8));
+        setVariants(allVariants.slice(0, 9));
       })
       .catch(() => setVariants([]))
       .finally(() => setLoading(false));
@@ -60,7 +63,7 @@ function HomePage() {
           ) : variants.length === 0 ? (
             <p className="text-center text-[#6B4422]" style={{ fontFamily: 'var(--font-sans)' }}>No hay productos disponibles por el momento.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
               {variants.map((variant) => (
                 <ProductCard
                   key={variant.id}
@@ -117,6 +120,9 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
+              <Route path="/mis-pedidos" element={<MyOrdersPage />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />

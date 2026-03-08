@@ -17,6 +17,14 @@ import {
   updateVariant,
   deleteVariant,
 } from '@/services/admin';
+import {
+  type OrderPublic,
+  type OrderStatus,
+  type PaymentStatus,
+  fetchAllOrders,
+  updateOrder,
+  deleteOrder as deleteOrderApi,
+} from '@/services/orders';
 
 // ============================================================
 // Shared styles
@@ -712,13 +720,300 @@ function ProductsTab({ isAdmin }: { isAdmin: boolean }) {
 }
 
 // ============================================================
+// Orders Tab
+// ============================================================
+
+const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  pendiente: 'Pendiente',
+  confirmado: 'Confirmado',
+  preparando: 'Preparando',
+  en_camino: 'En camino',
+  entregado: 'Entregado',
+  cancelado: 'Cancelado',
+};
+
+const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
+  pendiente: '#eab308',
+  confirmado: '#3b82f6',
+  preparando: '#a855f7',
+  en_camino: '#6366f1',
+  entregado: '#16a34a',
+  cancelado: '#dc2626',
+};
+
+const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  pendiente: 'Pendiente',
+  pagado: 'Pagado',
+};
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  efectivo: 'Efectivo',
+  tarjeta: 'Tarjeta',
+  transferencia: 'Transferencia',
+};
+
+// Valid next statuses for each status
+const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
+  pendiente: ['confirmado', 'cancelado'],
+  confirmado: ['preparando', 'cancelado'],
+  preparando: ['en_camino', 'cancelado'],
+  en_camino: ['entregado', 'cancelado'],
+  entregado: [],
+  cancelado: [],
+};
+
+function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
+  const [orders, setOrders] = useState<OrderPublic[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [filterStatus, setFilterStatus] = useState<OrderStatus | ''>('');
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
+  async function load() {
+    try {
+      setLoading(true);
+      const data = await fetchAllOrders(
+        filterStatus || undefined,
+        undefined,
+      );
+      setOrders(data);
+    } catch (err: any) {
+      setError(err?.detail || 'Error al cargar pedidos');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, [filterStatus]);
+
+  function clearMessages() { setError(''); setSuccess(''); }
+
+  async function handleStatusChange(orderId: number, newStatus: OrderStatus) {
+    clearMessages();
+    try {
+      await updateOrder(orderId, { status: newStatus });
+      setSuccess(`Estado actualizado a "${ORDER_STATUS_LABELS[newStatus]}"`);
+      await load();
+    } catch (err: any) {
+      setError(err?.detail || 'Error al actualizar estado');
+    }
+  }
+
+  async function handlePaymentStatusChange(orderId: number, newPaymentStatus: PaymentStatus) {
+    clearMessages();
+    try {
+      await updateOrder(orderId, { payment_status: newPaymentStatus });
+      setSuccess(`Estado de pago actualizado a "${PAYMENT_STATUS_LABELS[newPaymentStatus]}"`);
+      await load();
+    } catch (err: any) {
+      setError(err?.detail || 'Error al actualizar estado de pago');
+    }
+  }
+
+  async function handleDelete(orderId: number) {
+    clearMessages();
+    try {
+      await deleteOrderApi(orderId);
+      setDeleteConfirm(null);
+      setSuccess('Pedido eliminado');
+      await load();
+    } catch (err: any) {
+      setError(err?.detail || 'Error al eliminar pedido');
+      setDeleteConfirm(null);
+    }
+  }
+
+  return (
+    <div>
+      {error && <div style={styles.error}>{error}</div>}
+      {success && <div style={styles.success}>{success}</div>}
+
+      {/* Filters */}
+      <div style={styles.card}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Filtrar por estado:</label>
+          <select
+            style={{ ...styles.input, minWidth: '150px' }}
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as OrderStatus | '')}
+          >
+            <option value="">Todos</option>
+            {(Object.keys(ORDER_STATUS_LABELS) as OrderStatus[]).map((s) => (
+              <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>
+            ))}
+          </select>
+          <button style={styles.btnSecondary} onClick={() => { clearMessages(); load(); }}>
+            Recargar
+          </button>
+        </div>
+      </div>
+
+      {/* Orders list */}
+      <div style={styles.card}>
+        {loading ? (
+          <p>Cargando pedidos...</p>
+        ) : orders.length === 0 ? (
+          <p style={{ color: '#6b7280' }}>No hay pedidos</p>
+        ) : (
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>Ticket</th>
+                <th style={styles.th}>Cliente</th>
+                <th style={styles.th}>Total</th>
+                <th style={styles.th}>Estado</th>
+                <th style={styles.th}>Pago</th>
+                <th style={styles.th}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <>
+                  <tr key={order.id}>
+                    <td style={styles.td}>
+                      <button
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3E2412', textDecoration: 'underline', fontSize: '0.875rem', padding: 0 }}
+                        onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
+                      >
+                        {order.ticket_number}
+                      </button>
+                    </td>
+                    <td style={styles.td}>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>{order.client_name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{order.phone}</div>
+                      </div>
+                    </td>
+                    <td style={styles.td}>${Number(order.total).toLocaleString('es-MX')}</td>
+                    <td style={styles.td}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '0.125rem 0.5rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: '#fff',
+                        background: ORDER_STATUS_COLORS[order.status],
+                      }}>
+                        {ORDER_STATUS_LABELS[order.status]}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '0.125rem 0.5rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: '#fff',
+                        background: order.payment_status === 'pagado' ? '#16a34a' : '#eab308',
+                      }}>
+                        {PAYMENT_STATUS_LABELS[order.payment_status]}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                        {/* Status transitions */}
+                        {NEXT_STATUSES[order.status].map((nextStatus) => (
+                          <button
+                            key={nextStatus}
+                            style={{
+                              ...styles.btnSmall,
+                              background: nextStatus === 'cancelado' ? '#dc2626' : ORDER_STATUS_COLORS[nextStatus],
+                              color: '#fff',
+                            }}
+                            onClick={() => handleStatusChange(order.id, nextStatus)}
+                          >
+                            {ORDER_STATUS_LABELS[nextStatus]}
+                          </button>
+                        ))}
+                        {/* Payment status toggle */}
+                        {order.payment_status === 'pendiente' && (
+                          <button
+                            style={{ ...styles.btnSmall, background: '#16a34a', color: '#fff' }}
+                            onClick={() => handlePaymentStatusChange(order.id, 'pagado')}
+                          >
+                            Marcar pagado
+                          </button>
+                        )}
+                        {/* Delete */}
+                        {isAdmin && (
+                          deleteConfirm === order.id ? (
+                            <>
+                              <button style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }} onClick={() => handleDelete(order.id)}>Confirmar</button>
+                              <button style={{ ...styles.btnSmall, background: '#6b7280', color: '#fff' }} onClick={() => setDeleteConfirm(null)}>No</button>
+                            </>
+                          ) : (
+                            <button style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }} onClick={() => setDeleteConfirm(order.id)}>Eliminar</button>
+                          )
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  {expandedId === order.id && (
+                    <tr key={`${order.id}-details`}>
+                      <td colSpan={6} style={{ padding: '0.75rem', background: '#fafafa' }}>
+                        <div style={{ paddingLeft: '1rem', borderLeft: '2px solid #e5e7eb' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.8125rem', marginBottom: '0.5rem' }}>
+                            <div>
+                              <strong>Entrega:</strong>{' '}
+                              {order.delivery_address && order.delivery_address !== 'Recoger en tienda'
+                                ? order.delivery_address
+                                : 'Recoger en tienda'}
+                            </div>
+                            <div>
+                              <strong>Metodo de pago:</strong> {PAYMENT_METHOD_LABELS[order.payment_method]}
+                            </div>
+                            {order.notes && (
+                              <div style={{ gridColumn: '1 / -1' }}>
+                                <strong>Notas:</strong> {order.notes}
+                              </div>
+                            )}
+                          </div>
+                          <table style={{ ...styles.table, fontSize: '0.8125rem' }}>
+                            <thead>
+                              <tr>
+                                <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Producto</th>
+                                <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Cantidad</th>
+                                <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Precio unit.</th>
+                                <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Subtotal</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {order.details.map((d) => (
+                                <tr key={d.id}>
+                                  <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>{d.variant_name}</td>
+                                  <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>{d.quantity}</td>
+                                  <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>${Number(d.unit_price).toLocaleString('es-MX')}</td>
+                                  <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>${Number(d.subtotal).toLocaleString('es-MX')}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // Main Admin Page
 // ============================================================
 
 export function AdminPage() {
   const { user, isAuthenticated, loading, logout, isAdmin } = useAdmin();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'categories' | 'products'>('categories');
+  const [activeTab, setActiveTab] = useState<'categories' | 'products' | 'orders'>('categories');
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -772,10 +1067,14 @@ export function AdminPage() {
           <button style={styles.tab(activeTab === 'products')} onClick={() => setActiveTab('products')}>
             Productos
           </button>
+          <button style={styles.tab(activeTab === 'orders')} onClick={() => setActiveTab('orders')}>
+            Pedidos
+          </button>
         </div>
 
         {activeTab === 'categories' && <CategoriesTab isAdmin={isAdmin} />}
         {activeTab === 'products' && <ProductsTab isAdmin={isAdmin} />}
+        {activeTab === 'orders' && <OrdersTab isAdmin={isAdmin} />}
       </div>
     </div>
   );

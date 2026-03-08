@@ -1,7 +1,3 @@
-// ============================================================
-// Cart Service — Sincronización del carrito con el backend
-// ============================================================
-
 import { apiFetchAuth } from './auth';
 import type { CartItem } from '@/context/CartContext';
 
@@ -12,7 +8,6 @@ interface ServerCartItem {
   product_name: string;
   product_price: number;
   product_image: string;
-  product_badge: string | null;
   quantity: number;
 }
 
@@ -29,7 +24,6 @@ function toCartItems(serverItems: ServerCartItem[]): CartItem[] {
       name: s.product_name,
       price: s.product_price,
       image: s.product_image,
-      badge: s.product_badge ?? undefined,
     },
     quantity: s.quantity,
   }));
@@ -41,24 +35,19 @@ function toServerItems(items: CartItem[]): ServerCartItem[] {
     product_name: i.product.name,
     product_price: i.product.price,
     product_image: i.product.image,
-    product_badge: i.product.badge ?? null,
     quantity: i.quantity,
   }));
 }
 
 // ----- API -----
 
-/**
- * Fetch the authenticated client's cart from the server.
- */
+// Obtener el carrito del servidor para el usuario autenticado. Si no hay carrito, devuelve un array vacío.
 export async function fetchServerCart(): Promise<CartItem[]> {
   const res = await apiFetchAuth<ServerCartResponse>('/clients/cart');
   return toCartItems(res.items);
 }
 
-/**
- * Replace the server cart with the given items.
- */
+// Sincronizar el carrito local con el servidor. Reemplaza completamente el carrito del servidor con el local.
 export async function syncCartToServer(items: CartItem[]): Promise<void> {
   await apiFetchAuth('/clients/cart', {
     method: 'PUT',

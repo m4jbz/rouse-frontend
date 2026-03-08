@@ -15,7 +15,7 @@ export function Footer() {
               Tradición mexicana en cada bocado. Elaboramos nuestros productos con ingredientes de la más alta calidad.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-white/70 hover:text-[#D4A445] transition-colors">
+              <a href="https://www.facebook.com/share/183H4n8F39/" className="text-white/70 hover:text-[#D4A445] transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
             </div>

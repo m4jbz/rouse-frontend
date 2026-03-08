@@ -1,10 +1,4 @@
-// ============================================================
-// Auth Service — Integración real con backend
-// ============================================================
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-// ----- Tipos -----
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export interface User {
   id: string;
@@ -47,7 +41,7 @@ export interface AuthError {
   detail: string;
 }
 
-// ----- Token management -----
+// ----- Gestión de tokens -----
 
 const ACCESS_TOKEN_KEY = 'rouse_access_token';
 const REFRESH_TOKEN_KEY = 'rouse_refresh_token';
