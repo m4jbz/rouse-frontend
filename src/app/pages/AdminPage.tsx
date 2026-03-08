@@ -25,6 +25,15 @@ import {
   updateOrder,
   deleteOrder as deleteOrderApi,
 } from '@/services/orders';
+import {
+  startOfWeek,
+  startOfMonth,
+  today,
+  filterOrdersByDate,
+  computeSummary,
+  generateReportPDF,
+  type ReportSummary,
+} from '@/services/reports';
 
 // ============================================================
 // Shared styles
@@ -916,7 +925,13 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
                     <td style={styles.td}>
                       <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                         {/* Status transitions */}
-                        {NEXT_STATUSES[order.status].map((nextStatus) => (
+                        {NEXT_STATUSES[order.status]
+                          .filter((nextStatus) => {
+                            // No mostrar boton de cancelar si ya esta pagado
+                            if (nextStatus === 'cancelado' && order.payment_status === 'pagado') return false;
+                            return true;
+                          })
+                          .map((nextStatus) => (
                           <button
                             key={nextStatus}
                             style={{
@@ -1007,13 +1022,239 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
 }
 
 // ============================================================
+// Reportes Tab
+// ============================================================
+
+const SUMMARY_CARDS: { key: keyof ReportSummary; label: string; color: string; isMoney: boolean }[] = [
+  { key: 'totalRevenue', label: 'Ingresos Totales', color: '#16a34a', isMoney: true },
+  { key: 'totalOrders', label: 'Total Pedidos', color: '#3b82f6', isMoney: false },
+  { key: 'averageTicket', label: 'Ticket Promedio', color: '#a855f7', isMoney: true },
+  { key: 'deliveredOrders', label: 'Entregados', color: '#16a34a', isMoney: false },
+  { key: 'cancelledOrders', label: 'Cancelados', color: '#dc2626', isMoney: false },
+  { key: 'pendingOrders', label: 'En Proceso', color: '#eab308', isMoney: false },
+];
+
+function ReportesTab() {
+  const [allOrders, setAllOrders] = useState<OrderPublic[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<OrderPublic[]>([]);
+  const [summary, setSummary] = useState<ReportSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const [dateFrom, setDateFrom] = useState(startOfWeek());
+  const [dateTo, setDateTo] = useState(today());
+  const [quickFilter, setQuickFilter] = useState<'week' | 'month' | 'custom'>('week');
+
+  async function loadOrders() {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await fetchAllOrders();
+      setAllOrders(data);
+    } catch (err: any) {
+      setError(err?.detail || 'Error al cargar pedidos');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadOrders(); }, []);
+
+  // Re-filter whenever allOrders or date range changes
+  useEffect(() => {
+    const filtered = filterOrdersByDate(allOrders, dateFrom, dateTo);
+    setFilteredOrders(filtered);
+    setSummary(computeSummary(filtered));
+  }, [allOrders, dateFrom, dateTo]);
+
+  function handleQuickFilter(type: 'week' | 'month' | 'custom') {
+    setQuickFilter(type);
+    if (type === 'week') {
+      setDateFrom(startOfWeek());
+      setDateTo(today());
+    } else if (type === 'month') {
+      setDateFrom(startOfMonth());
+      setDateTo(today());
+    }
+    // 'custom' leaves the inputs for the user to set
+  }
+
+  function handleDownloadPDF() {
+    if (!summary) return;
+    generateReportPDF(filteredOrders, summary, dateFrom, dateTo);
+  }
+
+  function fmtMoney(n: number): string {
+    return `$${n.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  return (
+    <div>
+      {error && <div style={styles.error}>{error}</div>}
+
+      {/* Date filters */}
+      <div style={styles.card}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Periodo:</label>
+          <button
+            style={quickFilter === 'week'
+              ? styles.btnPrimary
+              : styles.btnSecondary}
+            onClick={() => handleQuickFilter('week')}
+          >
+            Esta semana
+          </button>
+          <button
+            style={quickFilter === 'month'
+              ? styles.btnPrimary
+              : styles.btnSecondary}
+            onClick={() => handleQuickFilter('month')}
+          >
+            Este mes
+          </button>
+          <button
+            style={quickFilter === 'custom'
+              ? styles.btnPrimary
+              : styles.btnSecondary}
+            onClick={() => handleQuickFilter('custom')}
+          >
+            Personalizado
+          </button>
+
+          <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+            <label style={{ fontSize: '0.75rem' }}>Desde:</label>
+            <input
+              type="date"
+              style={styles.input}
+              value={dateFrom}
+              onChange={(e) => { setDateFrom(e.target.value); setQuickFilter('custom'); }}
+            />
+            <label style={{ fontSize: '0.75rem' }}>Hasta:</label>
+            <input
+              type="date"
+              style={styles.input}
+              value={dateTo}
+              onChange={(e) => { setDateTo(e.target.value); setQuickFilter('custom'); }}
+            />
+          </div>
+
+          <button style={{ ...styles.btnPrimary, marginLeft: 'auto' }} onClick={handleDownloadPDF} disabled={!summary || filteredOrders.length === 0}>
+            Descargar PDF
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <p style={{ padding: '1rem' }}>Cargando...</p>
+      ) : (
+        <>
+          {/* Summary cards */}
+          {summary && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+              {SUMMARY_CARDS.map((card) => (
+                <div
+                  key={card.key}
+                  style={{
+                    background: '#fff',
+                    borderRadius: '8px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    padding: '1rem',
+                    borderLeft: `4px solid ${card.color}`,
+                  }}
+                >
+                  <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>{card.label}</div>
+                  <div style={{ fontSize: '1.375rem', fontWeight: 700, color: '#374151' }}>
+                    {card.isMoney ? fmtMoney(summary[card.key] as number) : String(summary[card.key])}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Orders table */}
+          <div style={styles.card}>
+            <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>
+              Detalle de pedidos ({filteredOrders.length})
+            </h3>
+            {filteredOrders.length === 0 ? (
+              <p style={{ color: '#6b7280' }}>No hay pedidos en este periodo</p>
+            ) : (
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Ticket</th>
+                    <th style={styles.th}>Cliente</th>
+                    <th style={styles.th}>Telefono</th>
+                    <th style={styles.th}>Estado</th>
+                    <th style={styles.th}>Metodo Pago</th>
+                    <th style={styles.th}>Pago</th>
+                    <th style={{ ...styles.th, textAlign: 'right' }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((order) => (
+                    <tr key={order.id}>
+                      <td style={styles.td}>{order.ticket_number}</td>
+                      <td style={styles.td}>{order.client_name}</td>
+                      <td style={styles.td}>{order.phone}</td>
+                      <td style={styles.td}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '0.125rem 0.5rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: '#fff',
+                          background: ORDER_STATUS_COLORS[order.status],
+                        }}>
+                          {ORDER_STATUS_LABELS[order.status]}
+                        </span>
+                      </td>
+                      <td style={styles.td}>{PAYMENT_METHOD_LABELS[order.payment_method]}</td>
+                      <td style={styles.td}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '0.125rem 0.5rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: '#fff',
+                          background: order.payment_status === 'pagado' ? '#16a34a' : '#eab308',
+                        }}>
+                          {PAYMENT_STATUS_LABELS[order.payment_status]}
+                        </span>
+                      </td>
+                      <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600 }}>{fmtMoney(Number(order.total))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan={6} style={{ ...styles.td, textAlign: 'right', fontWeight: 700, borderTop: '2px solid #e5e7eb' }}>
+                      Total del periodo:
+                    </td>
+                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 700, borderTop: '2px solid #e5e7eb' }}>
+                      {fmtMoney(filteredOrders.reduce((sum, o) => sum + Number(o.total), 0))}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // Main Admin Page
 // ============================================================
 
 export function AdminPage() {
   const { user, isAuthenticated, loading, logout, isAdmin } = useAdmin();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'categories' | 'products' | 'orders'>('categories');
+  const [activeTab, setActiveTab] = useState<'categories' | 'products' | 'orders' | 'reportes'>('categories');
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -1070,11 +1311,15 @@ export function AdminPage() {
           <button style={styles.tab(activeTab === 'orders')} onClick={() => setActiveTab('orders')}>
             Pedidos
           </button>
+          <button style={styles.tab(activeTab === 'reportes')} onClick={() => setActiveTab('reportes')}>
+            Reportes
+          </button>
         </div>
 
         {activeTab === 'categories' && <CategoriesTab isAdmin={isAdmin} />}
         {activeTab === 'products' && <ProductsTab isAdmin={isAdmin} />}
         {activeTab === 'orders' && <OrdersTab isAdmin={isAdmin} />}
+        {activeTab === 'reportes' && <ReportesTab />}
       </div>
     </div>
   );

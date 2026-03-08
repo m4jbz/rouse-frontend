@@ -48,6 +48,7 @@ export interface OrderPublic {
   payment_status: PaymentStatus;
   notes: string | null;
   total: number;
+  created_at: string;
   details: OrderDetailPublic[];
 }
 
