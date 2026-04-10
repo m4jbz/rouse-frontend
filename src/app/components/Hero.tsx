@@ -1,12 +1,11 @@
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import HeroBg from '../../../assets/images/fondo.jpg';
 
 export function Hero() {
   return (
     <section className="relative h-[600px] lg:h-[700px] overflow-hidden">
       <div className="absolute inset-0">
         <ImageWithFallback
-          src={HeroBg}
+          src={'https://codeberg.org/m4jbz/rouse-images/raw/branch/main/images/fondo.jpg'}
           alt="Pastel de tres leches artesanal"
           className="w-full h-full object-cover"
         />

@@ -6,12 +6,13 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // ----- Types -----
 
-export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia';
+export type PaymentMethod = 'efectivo' | 'transferencia';
 export type OrderStatus = 'pendiente' | 'confirmado' | 'preparando' | 'en_camino' | 'entregado' | 'cancelado';
 export type PaymentStatus = 'pendiente' | 'pagado';
 
 export interface OrderDetailCreate {
   product_id: number;
+  variant_id: number;
   variant_name: string;
   quantity: number;
   unit_price: number;
@@ -82,6 +83,7 @@ export function cartItemsToOrderDetails(items: CartItem[]): OrderDetailCreate[] 
     }
     return {
       product_id: parsed.productId,
+      variant_id: parsed.variantId,
       variant_name: item.product.name,
       quantity: item.quantity,
       unit_price: item.product.price,
@@ -190,7 +192,6 @@ export function buildWhatsAppMessage(order: OrderPublic): string {
 
   const paymentLabels: Record<PaymentMethod, string> = {
     efectivo: 'Efectivo',
-    tarjeta: 'Tarjeta',
     transferencia: 'Transferencia',
   };
   lines.push(`*Método de pago:* ${paymentLabels[order.payment_method]}`);

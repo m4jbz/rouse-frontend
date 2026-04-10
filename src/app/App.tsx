@@ -12,8 +12,8 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { CartPage } from './pages/CartPage';
 import { PastelesPage } from './pages/PastelesPage';
-import { PanaderiaPage } from './pages/PanaderiaPage';
 import { PostresPage } from './pages/PostresPage';
+import { CustomCakePage } from './pages/CustomCakePage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
@@ -23,21 +23,21 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
 import { BrandStory } from './components/BrandStory';
-import { fetchActiveProducts, flattenToVariants, type DisplayVariant } from '@/services/admin';
+import { fetchActiveProducts, toDisplayProducts, type DisplayProduct } from '@/services/admin';
 
 function HomePage() {
-  const [variants, setVariants] = useState<DisplayVariant[]>([]);
+  const [products, setProducts] = useState<DisplayProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchActiveProducts()
       .then((data) => {
-        // Show variants from categories 1 and 2 (pasteles), limited to first 8
-        const filtered = data.filter(p => p.category_id === 1 || p.category_id === 2 || p.category_id === 3);
-        const allVariants = flattenToVariants(filtered);
-        setVariants(allVariants.slice(0, 9));
+        // Show products from pasteles and postres sections, limited to first 9
+        const filtered = data.filter(p => p.category_id === 1 || p.category_id === 2 || p.category_id === 4 || p.category_id === 7);
+        const displayProducts = toDisplayProducts(filtered);
+        setProducts(displayProducts.slice(0, 9));
       })
-      .catch(() => setVariants([]))
+      .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -60,17 +60,14 @@ function HomePage() {
           </div>
           {loading ? (
             <p className="text-center text-[#6B4422]" style={{ fontFamily: 'var(--font-sans)' }}>Cargando productos...</p>
-          ) : variants.length === 0 ? (
+          ) : products.length === 0 ? (
             <p className="text-center text-[#6B4422]" style={{ fontFamily: 'var(--font-sans)' }}>No hay productos disponibles por el momento.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-              {variants.map((variant) => (
+              {products.map((product) => (
                 <ProductCard
-                  key={variant.id}
-                  id={variant.id}
-                  name={variant.name}
-                  price={variant.price}
-                  image={variant.image}
+                  key={product.id}
+                  product={product}
                 />
               ))}
             </div>
@@ -115,8 +112,8 @@ export default function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/pasteles" element={<PastelesPage />} />
-              <Route path="/panaderia" element={<PanaderiaPage />} />
               <Route path="/postres" element={<PostresPage />} />
+              <Route path="/pastel-personalizado" element={<CustomCakePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/cart" element={<CartPage />} />

@@ -74,10 +74,7 @@ export function CartDrawer() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h4
-                    className="text-sm font-semibold text-[#3E2412] truncate"
-                    style={{ fontFamily: 'var(--font-serif)' }}
-                  >
+                  <h4 className="product-name text-sm text-[#3E2412] truncate">
                     {item.product.name}
                   </h4>
                   <p

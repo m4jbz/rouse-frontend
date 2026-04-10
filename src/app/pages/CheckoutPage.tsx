@@ -265,10 +265,9 @@ export function CheckoutPage() {
                 >
                   Metodo de pago
                 </h3>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   {([
                     { value: 'efectivo' as PaymentMethod, label: 'Efectivo', icon: Banknote },
-                    { value: 'tarjeta' as PaymentMethod, label: 'Tarjeta', icon: CreditCard },
                     { value: 'transferencia' as PaymentMethod, label: 'Transferencia', icon: ArrowRightLeft },
                   ]).map(({ value, label, icon: Icon }) => (
                     <button
@@ -337,7 +336,7 @@ export function CheckoutPage() {
                 <div className="space-y-3 mb-4" style={{ fontFamily: 'var(--font-sans)' }}>
                   {items.map((item) => (
                     <div key={item.product.id} className="flex justify-between text-sm text-[#3E2412]">
-                      <span className="truncate mr-2">
+                      <span className="product-name truncate mr-2 text-xs">
                         {item.product.name} x{item.quantity}
                       </span>
                       <span className="flex-shrink-0">

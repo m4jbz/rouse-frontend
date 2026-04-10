@@ -58,8 +58,9 @@
   --sidebar-ring: #C8923A;
 
   /* Typography */
-  --font-serif: 'Playfair Display', serif;
-  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Montserrat', sans-serif;
+  --font-sans: 'Montserrat', sans-serif;
+  --font-product: 'Bebas Neue', sans-serif;
 }
 
 .dark {
@@ -207,12 +208,12 @@
     line-height: 1.5;
   }
 
-.header-logo {
-  width: 50px; /* Adjust size as needed */
-  height: auto; /* Maintain aspect ratio */
-  margin-right: 10px; /* Space between logo and name */
-  float: left;
-}
+  .header-logo {
+    width: 50px; /* Adjust size as needed */
+    height: auto; /* Maintain aspect ratio */
+    margin-right: 10px; /* Space between logo and name */
+    float: left;
+  }
 }
 
 #header-business-name {
@@ -223,4 +224,11 @@
   #header-business-name {
     white-space: normal;
   }
+}
+
+/* Product name styling - use for product names in cards, cart, checkout, etc. */
+.product-name {
+  font-family: var(--font-product);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }

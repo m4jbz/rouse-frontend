@@ -4,41 +4,38 @@ import { Footer } from '../components/Footer';
 import { CartDrawer } from '../components/CartDrawer';
 import { ProductCard } from '../components/ProductCard';
 import {
-  fetchProductsByCategories,
-  flattenToVariants,
+  fetchProductsBySection,
+  toDisplayProducts,
   listCategories,
-  type Product,
   type Category,
-  type DisplayVariant,
+  type DisplayProduct,
 } from '@/services/admin';
 
-const CATEGORY_IDS = [1, 2];
-
 export function PastelesPage() {
-  const [allVariants, setAllVariants] = useState<DisplayVariant[]>([]);
+  const [allProducts, setAllProducts] = useState<DisplayProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      fetchProductsByCategories(CATEGORY_IDS),
-      listCategories(),
+      fetchProductsBySection('pasteles'),
+      listCategories('pasteles'),
     ])
       .then(([products, cats]) => {
-        setAllVariants(flattenToVariants(products));
-        setCategories(cats.filter(c => CATEGORY_IDS.includes(c.id)));
+        setAllProducts(toDisplayProducts(products));
+        setCategories(cats);
       })
       .catch(() => {
-        setAllVariants([]);
+        setAllProducts([]);
         setCategories([]);
       })
       .finally(() => setLoading(false));
   }, []);
 
   const filtered = selectedCategory
-    ? allVariants.filter(v => v.categoryId === selectedCategory)
-    : allVariants;
+    ? allProducts.filter(p => p.categoryId === selectedCategory)
+    : allProducts;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -48,7 +45,7 @@ export function PastelesPage() {
       {/* Hero de sección */}
       <section className="relative h-[340px] sm:h-[400px] lg:h-[450px] overflow-hidden">
         <img
-          src="/assets/images/fondo_pasteles.png"
+          src="https://codeberg.org/m4jbz/rouse-images/raw/branch/main/images/fondo_pasteles.png"
           alt="Variedad de pasteles artesanales"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -118,15 +115,12 @@ export function PastelesPage() {
               No hay pasteles disponibles por el momento.
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-              {filtered.map((variant) => (
-                <ProductCard
-                  key={variant.id}
-                  id={variant.id}
-                  name={variant.name}
-                  price={variant.price}
-                  image={variant.image}
-                />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+      {filtered.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+        />
               ))}
             </div>
           )}

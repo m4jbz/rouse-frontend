@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import logo from '../../../assets/images/logo.png'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,7 +29,7 @@ export function Header() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/">
-              <img src={logo} alt="logo" className="header-logo" />
+              <img src={'https://codeberg.org/m4jbz/rouse-images/raw/branch/main/logo.png'} alt="logo" className="header-logo" />
               <h1 id='header-business-name' className="text-2xl sm:text-3xl text-[#C8923A] mb-0" style={{ fontFamily: 'var(--font-serif)' }}>
                 Pastelería Rouse
               </h1>
@@ -45,11 +44,11 @@ export function Header() {
             <Link to="/pasteles" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
               Pasteles
             </Link>
-            <Link to="/panaderia" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
-              Panadería
-            </Link>
             <Link to="/postres" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
               Postres
+            </Link>
+            <Link to="/pastel-personalizado" className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
+              Personalizado
             </Link>
             <a href="#contacto" onClick={handleContactClick} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium">
               Contacto
@@ -113,11 +112,11 @@ export function Header() {
               <Link to="/pasteles" onClick={() => setMobileMenuOpen(false)} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
                 Pasteles
               </Link>
-              <Link to="/panaderia" onClick={() => setMobileMenuOpen(false)} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
-                Panadería
-              </Link>
               <Link to="/postres" onClick={() => setMobileMenuOpen(false)} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
                 Postres
+              </Link>
+              <Link to="/pastel-personalizado" onClick={() => setMobileMenuOpen(false)} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
+                Personalizado
               </Link>
               <a href="#contacto" onClick={handleContactClick} className="text-[#3E2412] hover:text-[#C8923A] transition-colors font-medium py-2">
                 Contacto

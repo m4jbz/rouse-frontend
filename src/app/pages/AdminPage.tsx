@@ -5,6 +5,7 @@ import {
   type Category,
   type Product,
   type Variant,
+  type CustomCakeRequest,
   listCategories,
   createCategory,
   updateCategory,
@@ -16,6 +17,9 @@ import {
   createVariant,
   updateVariant,
   deleteVariant,
+  listCustomCakeRequests,
+  updateCustomCakeRequest,
+  deleteCustomCakeRequest,
 } from '@/services/admin';
 import {
   type OrderPublic,
@@ -33,7 +37,9 @@ import {
   computeSummary,
   generateReportPDF,
   type ReportSummary,
+  type CustomCakeSaleRow,
 } from '@/services/reports';
+import { uploadImageToCodeberg } from '@/services/codeberg';
 
 // ============================================================
 // Shared styles
@@ -336,21 +342,53 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
   const [showForm, setShowForm] = useState(false);
   const [vName, setVName] = useState('');
   const [vPrice, setVPrice] = useState('');
+  const [vSize, setVSize] = useState('');
+  const [vFlavor, setVFlavor] = useState('');
   const [vImagePath, setVImagePath] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  
   const [editVId, setEditVId] = useState<number | null>(null);
   const [editVName, setEditVName] = useState('');
   const [editVPrice, setEditVPrice] = useState('');
+  const [editVSize, setEditVSize] = useState('');
+  const [editVFlavor, setEditVFlavor] = useState('');
   const [editVImagePath, setEditVImagePath] = useState('');
+  const [editUploadingImage, setEditUploadingImage] = useState(false);
+  
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [error, setError] = useState('');
+
+  async function handleImageUpload(file: File, isEdit: boolean = false) {
+    const setUploading = isEdit ? setEditUploadingImage : setUploadingImage;
+    const setImagePath = isEdit ? setEditVImagePath : setVImagePath;
+    
+    setUploading(true);
+    setError('');
+    try {
+      const url = await uploadImageToCodeberg(file, 'images');
+      setImagePath(url);
+    } catch (err: any) {
+      setError(err.message || 'Error al subir imagen');
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function handleCreateVariant(e: SubmitEvent) {
     e.preventDefault();
     setError('');
     try {
-      await createVariant(product.id, { name: vName, price: parseFloat(vPrice), image_path: vImagePath });
+      await createVariant(product.id, { 
+        name: vName, 
+        price: parseFloat(vPrice), 
+        size: vSize || undefined,
+        flavor: vFlavor || undefined,
+        image_path: vImagePath || undefined
+      });
       setVName('');
       setVPrice('');
+      setVSize('');
+      setVFlavor('');
       setVImagePath('');
       setShowForm(false);
       onRefresh();
@@ -364,7 +402,13 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
     if (editVId === null) return;
     setError('');
     try {
-      await updateVariant(product.id, editVId, { name: editVName, price: parseFloat(editVPrice), image_path: editVImagePath });
+      await updateVariant(product.id, editVId, { 
+        name: editVName, 
+        price: parseFloat(editVPrice),
+        size: editVSize || undefined,
+        flavor: editVFlavor || undefined,
+        image_path: editVImagePath || undefined
+      });
       setEditVId(null);
       onRefresh();
     } catch (err: any) {
@@ -399,11 +443,26 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
       {error && <div style={{ ...styles.error, padding: '0.375rem', fontSize: '0.75rem' }}>{error}</div>}
 
       {showForm && (
-        <form onSubmit={handleCreateVariant} style={{ display: 'flex', gap: '0.375rem', marginBottom: '0.375rem', alignItems: 'flex-end' }}>
-          <input style={{ ...styles.input, width: '120px' }} placeholder="Nombre" value={vName} onChange={e => setVName(e.target.value)} required />
-          <input style={{ ...styles.input, width: '80px' }} placeholder="Precio" type="number" step="0.01" min="0.01" value={vPrice} onChange={e => setVPrice(e.target.value)} required />
-          <input style={{ ...styles.input, width: '200px' }} placeholder="Ruta imagen" value={vImagePath} onChange={e => setVImagePath(e.target.value)} />
-          <button type="submit" style={{ ...styles.btnSmall, background: '#16a34a', color: '#fff' }}>Crear</button>
+        <form onSubmit={handleCreateVariant} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem', padding: '0.5rem', background: '#fafafa', borderRadius: '4px' }}>
+          <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+            <input style={{ ...styles.input, width: '120px' }} placeholder="Nombre" value={vName} onChange={e => setVName(e.target.value)} required />
+            <input style={{ ...styles.input, width: '80px' }} placeholder="Precio" type="number" step="0.01" min="0.01" value={vPrice} onChange={e => setVPrice(e.target.value)} required />
+            <input style={{ ...styles.input, width: '90px' }} placeholder="Tamaño" value={vSize} onChange={e => setVSize(e.target.value)} />
+            <input style={{ ...styles.input, width: '90px' }} placeholder="Sabor" value={vFlavor} onChange={e => setVFlavor(e.target.value)} />
+          </div>
+          <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+            <input 
+              type="file" 
+              accept="image/*"
+              id="variant-image-upload"
+              onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+              style={{ ...styles.input, width: '200px', fontSize: '0.75rem' }}
+              disabled={uploadingImage}
+            />
+            {uploadingImage && <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Subiendo...</span>}
+            {vImagePath && <span style={{ fontSize: '0.75rem', color: '#16a34a' }}>✓ Imagen cargada</span>}
+          </div>
+          <button type="submit" style={{ ...styles.btnSmall, background: '#16a34a', color: '#fff', alignSelf: 'flex-start' }} disabled={uploadingImage}>Crear</button>
         </form>
       )}
 
@@ -413,6 +472,8 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
             <tr>
               <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Nombre</th>
               <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Precio</th>
+              <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Tamaño</th>
+              <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Sabor</th>
               <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Imagen</th>
               <th style={{ ...styles.th, padding: '0.25rem 0.5rem' }}>Acciones</th>
             </tr>
@@ -429,11 +490,27 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
                       <input style={{ ...styles.input, width: '70px' }} type="number" step="0.01" value={editVPrice} onChange={e => setEditVPrice(e.target.value)} />
                     </td>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
-                      <input style={{ ...styles.input, width: '70px' }} type="text" value={editVImagePath} onChange={e => setEditVImagePath(e.target.value)} />
+                      <input style={{ ...styles.input, width: '70px' }} value={editVSize} onChange={e => setEditVSize(e.target.value)} placeholder="Tamaño" />
+                    </td>
+                    <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
+                      <input style={{ ...styles.input, width: '70px' }} value={editVFlavor} onChange={e => setEditVFlavor(e.target.value)} placeholder="Sabor" />
+                    </td>
+                    <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], true)}
+                          style={{ fontSize: '0.7rem' }}
+                          disabled={editUploadingImage}
+                        />
+                        {editUploadingImage && <span style={{ fontSize: '0.65rem', color: '#6b7280' }}>Subiendo...</span>}
+                        {editVImagePath && <span style={{ fontSize: '0.65rem', color: '#16a34a' }}>✓ OK</span>}
+                      </div>
                     </td>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
                       <span style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button style={{ ...styles.btnSmall, background: '#16a34a', color: '#fff' }} onClick={handleUpdateVariant as any}>Ok</button>
+                        <button style={{ ...styles.btnSmall, background: '#16a34a', color: '#fff' }} onClick={handleUpdateVariant as any} disabled={editUploadingImage}>Ok</button>
                         <button style={{ ...styles.btnSmall, background: '#6b7280', color: '#fff' }} onClick={() => setEditVId(null)}>X</button>
                       </span>
                     </td>
@@ -442,12 +519,25 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
                   <>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>{v.name}</td>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>${v.price}</td>
-                    <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>{v.image_path}</td>
+                    <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>{v.size || '—'}</td>
+                    <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>{v.flavor || '—'}</td>
+                    <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
+                      {v.image_path ? (
+                        <a href={v.image_path} target="_blank" rel="noopener noreferrer" style={{ color: '#3E2412', textDecoration: 'underline', fontSize: '0.75rem' }}>Ver</a>
+                      ) : '—'}
+                    </td>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
                       <span style={{ display: 'flex', gap: '0.25rem' }}>
                         <button
                           style={{ ...styles.btnSmall, background: '#3E2412', color: '#fff' }}
-                          onClick={() => { setEditVId(v.id); setEditVName(v.name); setEditVPrice(String(v.price)); setEditVImagePath(v.image_path); }}
+                          onClick={() => { 
+                            setEditVId(v.id); 
+                            setEditVName(v.name); 
+                            setEditVPrice(String(v.price)); 
+                            setEditVSize(v.size || '');
+                            setEditVFlavor(v.flavor || '');
+                            setEditVImagePath(v.image_path || ''); 
+                          }}
                         >Ed</button>
                         {isAdmin && (
                           deleteConfirm === v.id ? (
@@ -757,7 +847,6 @@ const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   efectivo: 'Efectivo',
-  tarjeta: 'Tarjeta',
   transferencia: 'Transferencia',
 };
 
@@ -1022,6 +1111,342 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
 }
 
 // ============================================================
+// Solicitudes Tab (Custom Cake Requests)
+// ============================================================
+
+const REQUEST_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  pendiente: { label: 'Pendiente', color: '#eab308' },
+  cotizado: { label: 'Cotizado', color: '#3b82f6' },
+  aceptado: { label: 'Aceptado', color: '#22c55e' },
+  en_proceso: { label: 'En Proceso', color: '#a855f7' },
+  completado: { label: 'Completado', color: '#16a34a' },
+  cancelado: { label: 'Cancelado', color: '#dc2626' },
+};
+
+function SolicitudesTab({ isAdmin }: { isAdmin: boolean }) {
+  const [requests, setRequests] = useState<CustomCakeRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
+  
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editStatus, setEditStatus] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
+  async function load() {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await listCustomCakeRequests(filterStatus || undefined);
+      setRequests(data);
+    } catch (err: any) {
+      setError(err?.detail || 'Error al cargar solicitudes');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, [filterStatus]);
+
+  function clearMessages() { setError(''); setSuccess(''); }
+
+  function startEdit(req: CustomCakeRequest) {
+    setEditingId(req.id);
+    setEditStatus(req.status);
+    setEditPrice(req.quoted_price?.toString() || '');
+    setEditNotes(req.admin_notes || '');
+    clearMessages();
+  }
+
+  async function handleUpdate(e: SubmitEvent) {
+    e.preventDefault();
+    if (editingId === null) return;
+    clearMessages();
+    try {
+      await updateCustomCakeRequest(editingId, {
+        status: editStatus,
+        quoted_price: editPrice ? parseFloat(editPrice) : undefined,
+        admin_notes: editNotes || undefined,
+      });
+      setEditingId(null);
+      setSuccess('Solicitud actualizada');
+      await load();
+    } catch (err: any) {
+      setError(err?.detail || 'Error al actualizar');
+    }
+  }
+
+  async function handleDelete(requestId: number) {
+    clearMessages();
+    try {
+      await deleteCustomCakeRequest(requestId);
+      setDeleteConfirm(null);
+      setSuccess('Solicitud eliminada');
+      await load();
+    } catch (err: any) {
+      setError(err?.detail || 'Error al eliminar solicitud');
+      setDeleteConfirm(null);
+    }
+  }
+
+  function formatDate(dateStr: string) {
+    return new Date(dateStr).toLocaleDateString('es-MX', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  function formatDateTime(dateStr: string) {
+    return new Date(dateStr).toLocaleString('es-MX', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  return (
+    <div>
+      {error && <div style={styles.error}>{error}</div>}
+      {success && <div style={styles.success}>{success}</div>}
+
+      {/* Filter */}
+      <div style={{ ...styles.card, marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Filtrar por estado:</label>
+          <select
+            style={{ ...styles.input, minWidth: '150px' }}
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}
+          >
+            <option value="">Todos</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="cotizado">Cotizado</option>
+            <option value="aceptado">Aceptado</option>
+            <option value="en_proceso">En Proceso</option>
+            <option value="completado">Completado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            {requests.length} solicitud{requests.length !== 1 ? 'es' : ''}
+          </span>
+        </div>
+      </div>
+
+      {/* List */}
+      {loading ? (
+        <p>Cargando...</p>
+      ) : requests.length === 0 ? (
+        <div style={styles.card}>
+          <p style={{ textAlign: 'center', color: '#6b7280' }}>No hay solicitudes</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {requests.map(req => {
+            const statusInfo = REQUEST_STATUS_LABELS[req.status] || { label: req.status, color: '#6b7280' };
+            const isExpanded = expandedId === req.id;
+            const isEditing = editingId === req.id;
+
+            return (
+              <div key={req.id} style={styles.card}>
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                  <div>
+                    <span style={{ fontWeight: 600, fontSize: '1rem' }}>{req.client_name}</span>
+                    <span
+                      style={{
+                        marginLeft: '0.75rem',
+                        padding: '0.125rem 0.5rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: '#fff',
+                        background: statusInfo.color,
+                      }}
+                    >
+                      {statusInfo.label}
+                    </span>
+                  </div>
+                  <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#6b7280' }}>
+                    <div>Solicitud #{req.id}</div>
+                    <div>{formatDateTime(req.created_at)}</div>
+                  </div>
+                </div>
+
+                {/* Summary row */}
+                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.875rem', color: '#374151' }}>
+                  <div><strong>Tamaño:</strong> {req.cake_size}</div>
+                  <div><strong>Pisos:</strong> {req.cake_layers}</div>
+                  <div><strong>Sabor:</strong> {req.cake_flavor}</div>
+                  <div><strong>Entrega:</strong> {formatDate(req.delivery_date)}{req.delivery_time ? ` a las ${req.delivery_time}` : ''}</div>
+                  {req.quoted_price && (
+                    <div><strong>Cotización:</strong> ${Number(req.quoted_price).toLocaleString('es-MX')}</div>
+                  )}
+                </div>
+
+                {/* Toggle expand */}
+                <button
+                  onClick={() => setExpandedId(isExpanded ? null : req.id)}
+                  style={{ ...styles.btnSmall, marginTop: '0.5rem', background: '#e5e7eb', color: '#374151' }}
+                >
+                  {isExpanded ? '▲ Menos detalles' : '▼ Más detalles'}
+                </button>
+
+                {/* Expanded details */}
+                {isExpanded && (
+                  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', fontSize: '0.875rem' }}>
+                      <div>
+                        <strong>Contacto:</strong><br />
+                        {req.client_email}<br />
+                        {req.client_phone}
+                      </div>
+                      {req.filling && (
+                        <div><strong>Relleno:</strong> {req.filling}</div>
+                      )}
+                      {req.topping && (
+                        <div><strong>Cobertura:</strong> {req.topping}</div>
+                      )}
+                      {req.custom_text && (
+                        <div><strong>Texto:</strong> {req.custom_text}</div>
+                      )}
+                      {req.additional_notes && (
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <strong>Notas del cliente:</strong><br />
+                          {req.additional_notes}
+                        </div>
+                      )}
+                      {req.admin_notes && (
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <strong>Notas internas:</strong><br />
+                          {req.admin_notes}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Reference images */}
+                    {req.reference_images && req.reference_images.length > 0 && (
+                      <div style={{ marginTop: '1rem' }}>
+                        <strong style={{ fontSize: '0.875rem' }}>Imágenes de referencia:</strong>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                          {req.reference_images.map((url, idx) => (
+                            <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                              <img
+                                src={url}
+                                alt={`Referencia ${idx + 1}`}
+                                style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #e5e7eb' }}
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Edit form */}
+                    {isEditing ? (
+                      <form onSubmit={handleUpdate} style={{ marginTop: '1rem', padding: '1rem', background: '#f9fafb', borderRadius: '4px' }}>
+                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.125rem' }}>Estado</label>
+                            <select style={styles.input} value={editStatus} onChange={e => setEditStatus(e.target.value)}>
+                              <option value="pendiente">Pendiente</option>
+                              <option value="cotizado">Cotizado</option>
+                              <option value="aceptado">Aceptado</option>
+                              <option value="en_proceso">En Proceso</option>
+                              <option value="completado">Completado</option>
+                              <option value="cancelado">Cancelado</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.125rem' }}>Cotización ($)</label>
+                            <input
+                              style={{ ...styles.input, width: '120px' }}
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={editPrice}
+                              onChange={e => setEditPrice(e.target.value)}
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <div style={{ flex: 1, minWidth: '200px' }}>
+                            <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.125rem' }}>Notas internas</label>
+                            <input
+                              style={{ ...styles.input, width: '100%' }}
+                              value={editNotes}
+                              onChange={e => setEditNotes(e.target.value)}
+                              placeholder="Notas para el equipo..."
+                            />
+                          </div>
+                          <button type="submit" style={{ ...styles.btnSmall, background: '#16a34a', color: '#fff' }}>Guardar</button>
+                          <button type="button" onClick={() => setEditingId(null)} style={{ ...styles.btnSmall, background: '#6b7280', color: '#fff' }}>Cancelar</button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => startEdit(req)}
+                          style={{ ...styles.btnSmall, background: '#3b82f6', color: '#fff' }}
+                        >
+                          Editar
+                        </button>
+                        <a
+                          href={`https://wa.me/${req.client_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${req.client_name}, gracias por tu solicitud de pastel personalizado. `)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ ...styles.btnSmall, background: '#25d366', color: '#fff', textDecoration: 'none' }}
+                        >
+                          WhatsApp
+                        </a>
+
+                        {/* Delete (admin only) */}
+                        {isAdmin && (
+                          deleteConfirm === req.id ? (
+                            <>
+                              <button
+                                style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }}
+                                onClick={() => handleDelete(req.id)}
+                              >
+                                Confirmar
+                              </button>
+                              <button
+                                style={{ ...styles.btnSmall, background: '#6b7280', color: '#fff' }}
+                                onClick={() => setDeleteConfirm(null)}
+                              >
+                                No
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }}
+                              onClick={() => setDeleteConfirm(req.id)}
+                            >
+                              Eliminar
+                            </button>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // Reportes Tab
 // ============================================================
 
@@ -1036,7 +1461,9 @@ const SUMMARY_CARDS: { key: keyof ReportSummary; label: string; color: string; i
 
 function ReportesTab() {
   const [allOrders, setAllOrders] = useState<OrderPublic[]>([]);
+  const [allCustomCompleted, setAllCustomCompleted] = useState<CustomCakeRequest[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<OrderPublic[]>([]);
+  const [filteredCustomCompleted, setFilteredCustomCompleted] = useState<CustomCakeSaleRow[]>([]);
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -1049,8 +1476,23 @@ function ReportesTab() {
     try {
       setLoading(true);
       setError('');
-      const data = await fetchAllOrders();
-      setAllOrders(data);
+      const [ordersRes, customRes] = await Promise.allSettled([
+        fetchAllOrders(),
+        listCustomCakeRequests('completado'),
+      ]);
+
+      if (ordersRes.status === 'fulfilled') {
+        setAllOrders(ordersRes.value);
+      } else {
+        throw ordersRes.reason;
+      }
+
+      if (customRes.status === 'fulfilled') {
+        setAllCustomCompleted(customRes.value);
+      } else {
+        // Keep reports usable even if custom cakes fail.
+        setAllCustomCompleted([]);
+      }
     } catch (err: any) {
       setError(err?.detail || 'Error al cargar pedidos');
     } finally {
@@ -1064,8 +1506,43 @@ function ReportesTab() {
   useEffect(() => {
     const filtered = filterOrdersByDate(allOrders, dateFrom, dateTo);
     setFilteredOrders(filtered);
-    setSummary(computeSummary(filtered));
-  }, [allOrders, dateFrom, dateTo]);
+
+    // Custom cakes: count as revenue/orders only when completed AND has quoted_price.
+    const fromTs = new Date(dateFrom + 'T00:00:00').getTime();
+    const toTs = new Date(dateTo + 'T23:59:59').getTime();
+    const customRows: CustomCakeSaleRow[] = allCustomCompleted
+      .filter((r) => r.quoted_price != null)
+      .filter((r) => {
+        const ts = new Date(r.updated_at).getTime();
+        return ts >= fromTs && ts <= toTs;
+      })
+      .map((r) => ({
+        id: r.id,
+        client_name: r.client_name,
+        client_phone: r.client_phone,
+        updated_at: r.updated_at,
+        quoted_price: Number(r.quoted_price),
+      }));
+    setFilteredCustomCompleted(customRows);
+
+    const base = computeSummary(filtered);
+
+    const customRevenue = customRows.reduce((sum, r) => sum + Number(r.quoted_price), 0);
+    const customCount = customRows.length;
+    const nonCancelledOrders = filtered.filter((o) => o.status !== 'cancelado');
+    const nonCancelledRevenue = nonCancelledOrders.reduce((sum, o) => sum + Number(o.total), 0);
+    const nonCancelledCount = nonCancelledOrders.length + customCount;
+
+    const merged: ReportSummary = {
+      ...base,
+      totalRevenue: base.totalRevenue + customRevenue,
+      totalOrders: base.totalOrders + customCount,
+      deliveredOrders: base.deliveredOrders + customCount,
+      averageTicket: nonCancelledCount > 0 ? (nonCancelledRevenue + customRevenue) / nonCancelledCount : 0,
+    };
+
+    setSummary(merged);
+  }, [allOrders, allCustomCompleted, dateFrom, dateTo]);
 
   function handleQuickFilter(type: 'week' | 'month' | 'custom') {
     setQuickFilter(type);
@@ -1081,7 +1558,7 @@ function ReportesTab() {
 
   function handleDownloadPDF() {
     if (!summary) return;
-    generateReportPDF(filteredOrders, summary, dateFrom, dateTo);
+    generateReportPDF(filteredOrders, summary, dateFrom, dateTo, filteredCustomCompleted);
   }
 
   function fmtMoney(n: number): string {
@@ -1138,7 +1615,11 @@ function ReportesTab() {
             />
           </div>
 
-          <button style={{ ...styles.btnPrimary, marginLeft: 'auto' }} onClick={handleDownloadPDF} disabled={!summary || filteredOrders.length === 0}>
+          <button
+            style={{ ...styles.btnPrimary, marginLeft: 'auto' }}
+            onClick={handleDownloadPDF}
+            disabled={!summary || (filteredOrders.length === 0 && filteredCustomCompleted.length === 0)}
+          >
             Descargar PDF
           </button>
         </div>
@@ -1241,6 +1722,49 @@ function ReportesTab() {
               </table>
             )}
           </div>
+
+          {/* Custom cakes table */}
+          <div style={styles.card}>
+            <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>
+              Solicitudes personalizadas completadas ({filteredCustomCompleted.length})
+            </h3>
+            {filteredCustomCompleted.length === 0 ? (
+              <p style={{ color: '#6b7280' }}>No hay solicitudes completadas en este periodo</p>
+            ) : (
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Solicitud</th>
+                    <th style={styles.th}>Cliente</th>
+                    <th style={styles.th}>Telefono</th>
+                    <th style={styles.th}>Completado</th>
+                    <th style={{ ...styles.th, textAlign: 'right' }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCustomCompleted.map((r) => (
+                    <tr key={r.id}>
+                      <td style={styles.td}>#{r.id}</td>
+                      <td style={styles.td}>{r.client_name}</td>
+                      <td style={styles.td}>{r.client_phone}</td>
+                      <td style={styles.td}>{r.updated_at.slice(0, 10)}</td>
+                      <td style={{ ...styles.td, textAlign: 'right', fontWeight: 600 }}>{fmtMoney(Number(r.quoted_price))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan={4} style={{ ...styles.td, textAlign: 'right', fontWeight: 700, borderTop: '2px solid #e5e7eb' }}>
+                      Total del periodo:
+                    </td>
+                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 700, borderTop: '2px solid #e5e7eb' }}>
+                      {fmtMoney(filteredCustomCompleted.reduce((sum, r) => sum + Number(r.quoted_price), 0))}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            )}
+          </div>
         </>
       )}
     </div>
@@ -1254,7 +1778,7 @@ function ReportesTab() {
 export function AdminPage() {
   const { user, isAuthenticated, loading, logout, isAdmin } = useAdmin();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'categories' | 'products' | 'orders' | 'reportes'>('categories');
+  const [activeTab, setActiveTab] = useState<'categories' | 'products' | 'orders' | 'solicitudes' | 'reportes'>('categories');
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -1311,6 +1835,9 @@ export function AdminPage() {
           <button style={styles.tab(activeTab === 'orders')} onClick={() => setActiveTab('orders')}>
             Pedidos
           </button>
+          <button style={styles.tab(activeTab === 'solicitudes')} onClick={() => setActiveTab('solicitudes')}>
+            Solicitudes
+          </button>
           <button style={styles.tab(activeTab === 'reportes')} onClick={() => setActiveTab('reportes')}>
             Reportes
           </button>
@@ -1319,6 +1846,7 @@ export function AdminPage() {
         {activeTab === 'categories' && <CategoriesTab isAdmin={isAdmin} />}
         {activeTab === 'products' && <ProductsTab isAdmin={isAdmin} />}
         {activeTab === 'orders' && <OrdersTab isAdmin={isAdmin} />}
+        {activeTab === 'solicitudes' && <SolicitudesTab isAdmin={isAdmin} />}
         {activeTab === 'reportes' && <ReportesTab />}
       </div>
     </div>

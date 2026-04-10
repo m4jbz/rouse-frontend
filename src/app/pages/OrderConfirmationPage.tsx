@@ -18,7 +18,6 @@ export function OrderConfirmationPage() {
 
   const paymentLabels: Record<string, string> = {
     efectivo: 'Efectivo',
-    tarjeta: 'Tarjeta',
     transferencia: 'Transferencia',
   };
 

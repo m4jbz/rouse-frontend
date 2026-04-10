@@ -48,7 +48,7 @@ export function PanaderiaPage() {
       {/* Hero de sección */}
       <section className="relative h-[340px] sm:h-[400px] lg:h-[450px] overflow-hidden">
         <img
-          src="/assets/images/fondo-panes.jpg"
+          src="https://codeberg.org/m4jbz/rouse-images/raw/branch/main/images/fondo-panes.jpg"
           alt="Pan artesanal recién horneado"
           className="absolute inset-0 w-full h-full object-cover"
         />

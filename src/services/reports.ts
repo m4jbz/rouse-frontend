@@ -2,6 +2,14 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { OrderPublic } from './orders';
 
+export interface CustomCakeSaleRow {
+  id: number;
+  client_name: string;
+  client_phone: string;
+  updated_at: string;
+  quoted_price: number;
+}
+
 // ----- Types -----
 
 export interface ReportSummary {
@@ -126,6 +134,7 @@ export function generateReportPDF(
   summary: ReportSummary,
   dateFrom: string,
   dateTo: string,
+  customCakesCompleted: CustomCakeSaleRow[] = [],
 ): void {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -258,6 +267,53 @@ export function generateReportPDF(
       );
     },
   });
+
+  // ── Custom cakes table (optional) ──
+  if (customCakesCompleted.length > 0) {
+    const lastY = (doc as any).lastAutoTable?.finalY;
+    y = (typeof lastY === 'number' ? lastY : y) + 10;
+
+    doc.setTextColor(62, 36, 18);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Solicitudes Personalizadas Completadas', 14, y);
+    y += 4;
+
+    const cakeTableData = customCakesCompleted.map((r) => [
+      `#${r.id}`,
+      r.client_name,
+      r.client_phone,
+      fmtDate(r.updated_at),
+      fmtMoney(Number(r.quoted_price)),
+    ]);
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Solicitud', 'Cliente', 'Telefono', 'Completado', 'Total']],
+      body: cakeTableData,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2.5,
+        textColor: [55, 65, 81],
+        lineColor: [229, 231, 235],
+        lineWidth: 0.3,
+      },
+      headStyles: {
+        fillColor: [62, 36, 18],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 9,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      columnStyles: {
+        0: { cellWidth: 20 },
+        4: { halign: 'right', cellWidth: 28 },
+      },
+      margin: { left: 14, right: 14 },
+    });
+  }
 
   // ── Download ──
   const fileName = `reporte_rouse_${dateFrom}_a_${dateTo}.pdf`;

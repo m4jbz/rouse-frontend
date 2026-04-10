@@ -89,10 +89,7 @@ export function CartPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
-                        <h3
-                          className="text-lg text-[#3E2412] font-semibold"
-                          style={{ fontFamily: 'var(--font-serif)' }}
-                        >
+                        <h3 className="product-name text-lg text-[#3E2412]">
                           {item.product.name}
                         </h3>
                         <p

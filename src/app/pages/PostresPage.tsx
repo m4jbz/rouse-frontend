@@ -4,51 +4,49 @@ import { Footer } from '../components/Footer';
 import { CartDrawer } from '../components/CartDrawer';
 import { ProductCard } from '../components/ProductCard';
 import {
-  fetchProductsByCategories,
-  flattenToVariants,
+  fetchProductsBySection,
+  toDisplayProducts,
   listCategories,
   type Product,
   type Category,
-  type DisplayVariant,
+  type DisplayProduct,
 } from '@/services/admin';
 
-const CATEGORY_IDS = [4, 5, 6, 7, 8, 9];
-
 export function PostresPage() {
-  const [allVariants, setAllVariants] = useState<DisplayVariant[]>([]);
+  const [allProducts, setAllProducts] = useState<DisplayProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      fetchProductsByCategories(CATEGORY_IDS),
-      listCategories(),
+      fetchProductsBySection('postres'),
+      listCategories('postres'),
     ])
       .then(([products, cats]) => {
-        setAllVariants(flattenToVariants(products));
-        setCategories(cats.filter(c => CATEGORY_IDS.includes(c.id)));
+        setAllProducts(toDisplayProducts(products));
+        setCategories(cats);
       })
       .catch(() => {
-        setAllVariants([]);
+        setAllProducts([]);
         setCategories([]);
       })
       .finally(() => setLoading(false));
   }, []);
 
   const filtered = selectedCategory
-    ? allVariants.filter(v => v.categoryId === selectedCategory)
-    : allVariants;
+    ? allProducts.filter(p => p.categoryId === selectedCategory)
+    : allProducts;
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <CartDrawer />
 
-      {/* Hero de sección */}
+      {/* Hero de seccion */}
       <section className="relative h-[340px] sm:h-[400px] lg:h-[450px] overflow-hidden">
         <img
-          src="/assets/images/fondo-postres.jpg"
+          src="https://codeberg.org/m4jbz/rouse-images/raw/branch/main/images/fondo-postres.jpg"
           alt="Variedad de postres artesanales"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -64,8 +62,8 @@ export function PostresPage() {
               className="text-lg sm:text-xl text-[#6B4422] max-w-2xl mx-auto"
               style={{ fontFamily: 'var(--font-sans)' }}
             >
-              Gelatinas, cupcakes, galletas y más.{' '}
-              <strong>Postres artesanales para endulzar tu día.</strong>
+              Gelatinas, cupcakes, galletas, pan y mas.{' '}
+              <strong>Postres artesanales para endulzar tu dia.</strong>
             </p>
           </div>
         </div>
@@ -115,18 +113,15 @@ export function PostresPage() {
             <p className="text-center text-[#6B4422]" style={{ fontFamily: 'var(--font-sans)' }}>Cargando productos...</p>
           ) : filtered.length === 0 ? (
             <p className="text-center text-[#6B4422] py-12" style={{ fontFamily: 'var(--font-sans)' }}>
-              Próximamente agregaremos postres. ¡Vuelve pronto!
+              Proximamente agregaremos postres. Vuelve pronto!
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-              {filtered.map((variant) => (
-                <ProductCard
-                  key={variant.id}
-                  id={variant.id}
-                  name={variant.name}
-                  price={variant.price}
-                  image={variant.image}
-                />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+      {filtered.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+        />
               ))}
             </div>
           )}

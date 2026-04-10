@@ -6,6 +6,7 @@ import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { CartDrawer } from '../components/CartDrawer';
 import { type OrderPublic, type OrderStatus, fetchMyOrders } from '@/services/orders';
+import { fetchMyCustomCakeRequests, type CustomCakeRequestPublic, type CustomCakeRequestStatus } from '@/services/customCakes';
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; icon: typeof Package }> = {
   pendiente: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
@@ -18,7 +19,6 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; icon: t
 
 const PAYMENT_LABELS: Record<string, string> = {
   efectivo: 'Efectivo',
-  tarjeta: 'Tarjeta',
   transferencia: 'Transferencia',
 };
 
@@ -26,9 +26,21 @@ export function MyOrdersPage() {
   const navigate = useNavigate();
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<OrderPublic[]>([]);
+  const [customRequests, setCustomRequests] = useState<CustomCakeRequestPublic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const [expandedRequestId, setExpandedRequestId] = useState<number | null>(null);
+
+  const CUSTOM_STATUS_LABELS: Record<CustomCakeRequestStatus, { label: string; color: string }> = {
+    pendiente: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
+    cotizado: { label: 'Cotizado', color: 'bg-blue-100 text-blue-800' },
+    aceptado: { label: 'Aceptado', color: 'bg-green-100 text-green-800' },
+    en_proceso: { label: 'En proceso', color: 'bg-purple-100 text-purple-800' },
+    completado: { label: 'Completado', color: 'bg-emerald-100 text-emerald-800' },
+    cancelado: { label: 'Cancelado', color: 'bg-red-100 text-red-800' },
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -37,9 +49,22 @@ export function MyOrdersPage() {
       return;
     }
 
-    fetchMyOrders()
-      .then(setOrders)
-      .catch((err: any) => setError(err?.detail || 'Error al cargar pedidos'))
+    Promise.allSettled([fetchMyOrders(), fetchMyCustomCakeRequests()])
+      .then((results) => {
+        const [ordersRes, cakesRes] = results;
+        if (ordersRes.status === 'fulfilled') {
+          setOrders(ordersRes.value);
+        } else {
+          setError(ordersRes.reason?.detail || 'Error al cargar pedidos');
+        }
+
+        if (cakesRes.status === 'fulfilled') {
+          setCustomRequests(cakesRes.value);
+        } else {
+          // Keep orders visible even if this fails
+          setError((prev) => prev || cakesRes.reason?.detail || 'Error al cargar solicitudes personalizadas');
+        }
+      })
       .finally(() => setLoading(false));
   }, [isAuthenticated, authLoading, navigate]);
 
@@ -85,7 +110,7 @@ export function MyOrdersPage() {
                 Cargando pedidos...
               </p>
             </div>
-          ) : orders.length === 0 ? (
+          ) : orders.length === 0 && customRequests.length === 0 ? (
             <div className="bg-[#FAF4EB] rounded-xl border border-[#D4B888] shadow-sm p-12 text-center">
               <Package className="w-20 h-20 text-[#D4B888] mx-auto mb-6" />
               <h3
@@ -109,8 +134,15 @@ export function MyOrdersPage() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              {orders.map((order) => {
+            <div className="space-y-8">
+              {/* Pedidos */}
+              {orders.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl text-[#3E2412]" style={{ fontFamily: 'var(--font-serif)' }}>
+                    Pedidos
+                  </h3>
+
+                  {orders.map((order) => {
                 const statusConfig = STATUS_CONFIG[order.status];
                 const StatusIcon = statusConfig.icon;
                 const isExpanded = expandedId === order.id;
@@ -214,7 +246,88 @@ export function MyOrdersPage() {
                     )}
                   </div>
                 );
-              })}
+                  })}
+                </div>
+              )}
+
+              {/* Solicitudes personalizadas */}
+              {customRequests.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl text-[#3E2412]" style={{ fontFamily: 'var(--font-serif)' }}>
+                    Solicitudes de pastel personalizado
+                  </h3>
+
+                  {customRequests.map((req) => {
+                    const cfg = CUSTOM_STATUS_LABELS[req.status];
+                    const isExpanded = expandedRequestId === req.id;
+                    return (
+                      <div
+                        key={req.id}
+                        className="bg-[#FAF4EB] rounded-xl border border-[#D4B888] shadow-sm overflow-hidden"
+                      >
+                        <button
+                          onClick={() => setExpandedRequestId(isExpanded ? null : req.id)}
+                          className="w-full p-4 sm:p-6 flex items-center justify-between hover:bg-[#EAD5B8]/30 transition-colors text-left"
+                        >
+                          <div>
+                            <p className="font-bold text-[#3E2412]" style={{ fontFamily: 'var(--font-sans)' }}>
+                              Solicitud #{req.id}
+                            </p>
+                            <p className="text-sm text-[#6B4422]" style={{ fontFamily: 'var(--font-sans)' }}>
+                              {req.cake_size} · {req.cake_flavor} · {req.cake_layers} piso{req.cake_layers !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${cfg.color}`} style={{ fontFamily: 'var(--font-sans)' }}>
+                              {cfg.label}
+                            </span>
+                            {req.quoted_price != null && (
+                              <span className="text-lg font-bold text-[#C8923A]" style={{ fontFamily: 'var(--font-sans)' }}>
+                                ${Number(req.quoted_price).toLocaleString('es-MX')}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="border-t border-[#D4B888] p-4 sm:p-6 space-y-3" style={{ fontFamily: 'var(--font-sans)' }}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <span className="text-[#6B4422]">Entrega: </span>
+                                <span className="text-[#3E2412] font-medium">
+                                  {req.delivery_date}{req.delivery_time ? ` ${req.delivery_time}` : ''}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-[#6B4422]">Cotización: </span>
+                                <span className="text-[#3E2412] font-medium">
+                                  {req.quoted_price != null ? `$${Number(req.quoted_price).toLocaleString('es-MX')} MXN` : 'Pendiente'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {(req.filling || req.topping || req.custom_text) && (
+                              <div className="text-sm text-[#3E2412] space-y-1">
+                                {req.filling && <div><span className="text-[#6B4422]">Relleno: </span>{req.filling}</div>}
+                                {req.topping && <div><span className="text-[#6B4422]">Cobertura: </span>{req.topping}</div>}
+                                {req.custom_text && <div><span className="text-[#6B4422]">Texto: </span>{req.custom_text}</div>}
+                              </div>
+                            )}
+
+                            {req.additional_notes && (
+                              <div className="text-sm">
+                                <span className="text-[#6B4422]">Notas: </span>
+                                <span className="text-[#3E2412]">{req.additional_notes}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
