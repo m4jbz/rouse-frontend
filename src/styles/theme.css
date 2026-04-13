@@ -227,8 +227,8 @@
 }
 
 /* Product name styling - use for product names in cards, cart, checkout, etc. */
-.product-name {
-  font-family: var(--font-product);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
+/* .product-name { */
+/*   font-family: var(--font-product); */
+/*   letter-spacing: 0.05em; */
+/*   text-transform: uppercase; */
+/* } */
