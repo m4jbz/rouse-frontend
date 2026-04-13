@@ -1,4 +1,4 @@
-import { useState, useEffect, SubmitEvent } from 'react';
+import { useRef, useState, useEffect, SubmitEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useAdmin } from '@/context/AdminContext';
 import {
@@ -358,6 +358,95 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [error, setError] = useState('');
 
+  function VariantImageUpload({
+    disabled,
+    uploading,
+    imageUrl,
+    onFile,
+    onClear,
+    compact,
+  }: {
+    disabled: boolean;
+    uploading: boolean;
+    imageUrl: string;
+    onFile: (file: File) => void;
+    onClear: () => void;
+    compact?: boolean;
+  }) {
+    const inputRef = useRef<HTMLInputElement | null>(null);
+    const btnText = imageUrl ? 'Cambiar imagen' : 'Subir imagen';
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.375rem',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          onChange={e => {
+            const file = e.target.files?.[0];
+            if (file) onFile(file);
+            // Allow picking the same file again.
+            e.currentTarget.value = '';
+          }}
+          style={{ display: 'none' }}
+          disabled={disabled}
+        />
+
+        <button
+          type="button"
+          style={{
+            ...(compact ? styles.btnSmall : styles.btnPrimary),
+            background: '#3E2412',
+            color: '#fff',
+          }}
+          onClick={() => inputRef.current?.click()}
+          disabled={disabled}
+        >
+          {uploading ? 'Subiendo...' : btnText}
+        </button>
+
+        {imageUrl ? (
+          <>
+            <a
+              href={imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: '#3E2412',
+                textDecoration: 'underline',
+                fontSize: compact ? '0.65rem' : '0.75rem',
+              }}
+            >
+              Ver
+            </a>
+            <button
+              type="button"
+              style={{
+                ...styles.btnSmall,
+                background: '#6b7280',
+                color: '#fff',
+              }}
+              onClick={onClear}
+              disabled={disabled}
+            >
+              Quitar
+            </button>
+            <span style={{ fontSize: compact ? '0.65rem' : '0.75rem', color: '#16a34a' }}>✓ OK</span>
+          </>
+        ) : (
+          <span style={{ fontSize: compact ? '0.65rem' : '0.75rem', color: '#6b7280' }}>Sin imagen</span>
+        )}
+      </div>
+    );
+  }
+
   async function handleImageUpload(file: File, isEdit: boolean = false) {
     const setUploading = isEdit ? setEditUploadingImage : setUploadingImage;
     const setImagePath = isEdit ? setEditVImagePath : setVImagePath;
@@ -451,16 +540,13 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
             <input style={{ ...styles.input, width: '90px' }} placeholder="Sabor" value={vFlavor} onChange={e => setVFlavor(e.target.value)} />
           </div>
           <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
-            <input 
-              type="file" 
-              accept="image/*"
-              id="variant-image-upload"
-              onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
-              style={{ ...styles.input, width: '200px', fontSize: '0.75rem' }}
+            <VariantImageUpload
               disabled={uploadingImage}
+              uploading={uploadingImage}
+              imageUrl={vImagePath}
+              onFile={(file) => handleImageUpload(file)}
+              onClear={() => setVImagePath('')}
             />
-            {uploadingImage && <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Subiendo...</span>}
-            {vImagePath && <span style={{ fontSize: '0.75rem', color: '#16a34a' }}>✓ Imagen cargada</span>}
           </div>
           <button type="submit" style={{ ...styles.btnSmall, background: '#16a34a', color: '#fff', alignSelf: 'flex-start' }} disabled={uploadingImage}>Crear</button>
         </form>
@@ -496,17 +582,14 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
                       <input style={{ ...styles.input, width: '70px' }} value={editVFlavor} onChange={e => setEditVFlavor(e.target.value)} placeholder="Sabor" />
                     </td>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <input 
-                          type="file" 
-                          accept="image/*"
-                          onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], true)}
-                          style={{ fontSize: '0.7rem' }}
-                          disabled={editUploadingImage}
-                        />
-                        {editUploadingImage && <span style={{ fontSize: '0.65rem', color: '#6b7280' }}>Subiendo...</span>}
-                        {editVImagePath && <span style={{ fontSize: '0.65rem', color: '#16a34a' }}>✓ OK</span>}
-                      </div>
+                      <VariantImageUpload
+                        disabled={editUploadingImage}
+                        uploading={editUploadingImage}
+                        imageUrl={editVImagePath}
+                        onFile={(file) => handleImageUpload(file, true)}
+                        onClear={() => setEditVImagePath('')}
+                        compact
+                      />
                     </td>
                     <td style={{ ...styles.td, padding: '0.25rem 0.5rem' }}>
                       <span style={{ display: 'flex', gap: '0.25rem' }}>
