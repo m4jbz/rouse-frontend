@@ -33,8 +33,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/panaderia" className="text-white/80 hover:text-[#D4A445] transition-colors">
-                  Panadería
+                <Link to="/postres" className="text-white/80 hover:text-[#D4A445] transition-colors">
+                  Postres
+                </Link>
+              </li>
+              <li>
+                <Link to="/pastel-personalizado" className="text-white/80 hover:text-[#D4A445] transition-colors">
+                  Personalizado
                 </Link>
               </li>
             </ul>
