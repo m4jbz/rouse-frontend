@@ -949,15 +949,15 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [filterStatus, setFilterStatus] = useState<OrderStatus | ''>('');
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState<PaymentStatus | ''>('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
   async function load() {
     try {
       setLoading(true);
       const data = await fetchAllOrders(
         filterStatus || undefined,
-        undefined,
+        filterPaymentStatus || undefined,
       );
       setOrders(data);
     } catch (err: any) {
@@ -967,7 +967,7 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
     }
   }
 
-  useEffect(() => { load(); }, [filterStatus]);
+  useEffect(() => { load(); }, [filterStatus, filterPaymentStatus]);
 
   function clearMessages() { setError(''); setSuccess(''); }
 
@@ -976,7 +976,10 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
     try {
       await updateOrder(orderId, { status: newStatus });
       setSuccess(`Estado actualizado a "${ORDER_STATUS_LABELS[newStatus]}"`);
-      await load();
+      // Optimistic update for faster UI feedback
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
+      // Keep the list consistent with server-side computations
+      void load();
     } catch (err: any) {
       setError(err?.detail || 'Error al actualizar estado');
     }
@@ -987,7 +990,8 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
     try {
       await updateOrder(orderId, { payment_status: newPaymentStatus });
       setSuccess(`Estado de pago actualizado a "${PAYMENT_STATUS_LABELS[newPaymentStatus]}"`);
-      await load();
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, payment_status: newPaymentStatus } : o)));
+      void load();
     } catch (err: any) {
       setError(err?.detail || 'Error al actualizar estado de pago');
     }
@@ -997,12 +1001,10 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
     clearMessages();
     try {
       await deleteOrderApi(orderId);
-      setDeleteConfirm(null);
       setSuccess('Pedido eliminado');
       await load();
     } catch (err: any) {
       setError(err?.detail || 'Error al eliminar pedido');
-      setDeleteConfirm(null);
     }
   }
 
@@ -1025,6 +1027,22 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
               <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>
             ))}
           </select>
+
+          <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Pago:</label>
+          <select
+            style={{ ...styles.input, minWidth: '150px' }}
+            value={filterPaymentStatus}
+            onChange={(e) => setFilterPaymentStatus(e.target.value as PaymentStatus | '')}
+          >
+            <option value="">Todos</option>
+            {(Object.keys(PAYMENT_STATUS_LABELS) as PaymentStatus[]).map((s) => (
+              <option key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</option>
+            ))}
+          </select>
+
+          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            {orders.length} pedido{orders.length !== 1 ? 's' : ''}
+          </span>
           <button style={styles.btnSecondary} onClick={() => { clearMessages(); load(); }}>
             Recargar
           </button>
@@ -1054,12 +1072,28 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
                 <>
                   <tr key={order.id}>
                     <td style={styles.td}>
-                      <button
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3E2412', textDecoration: 'underline', fontSize: '0.875rem', padding: 0 }}
-                        onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
-                      >
-                        {order.ticket_number}
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <button
+                          style={{
+                            ...styles.btnSmall,
+                            background: 'transparent',
+                            color: '#3E2412',
+                            textDecoration: 'underline',
+                            padding: 0,
+                            fontSize: '0.875rem',
+                          }}
+                          onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
+                        >
+                          {order.ticket_number}
+                        </button>
+                        <button
+                          type="button"
+                          style={{ ...styles.btnSmall, background: '#e5e7eb', color: '#374151' }}
+                          onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
+                        >
+                          {expandedId === order.id ? 'Ocultar' : 'Detalles'}
+                        </button>
+                      </div>
                     </td>
                     <td style={styles.td}>
                       <div>
@@ -1069,72 +1103,59 @@ function OrdersTab({ isAdmin }: { isAdmin: boolean }) {
                     </td>
                     <td style={styles.td}>${Number(order.total).toLocaleString('es-MX')}</td>
                     <td style={styles.td}>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '0.125rem 0.5rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#fff',
-                        background: ORDER_STATUS_COLORS[order.status],
-                      }}>
-                        {ORDER_STATUS_LABELS[order.status]}
-                      </span>
-                    </td>
-                    <td style={styles.td}>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '0.125rem 0.5rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#fff',
-                        background: order.payment_status === 'pagado' ? '#16a34a' : '#eab308',
-                      }}>
-                        {PAYMENT_STATUS_LABELS[order.payment_status]}
-                      </span>
-                    </td>
-                    <td style={styles.td}>
-                      <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                        {/* Status transitions */}
-                        {NEXT_STATUSES[order.status]
-                          .filter((nextStatus) => {
-                            // No mostrar boton de cancelar si ya esta pagado
-                            if (nextStatus === 'cancelado' && order.payment_status === 'pagado') return false;
-                            return true;
-                          })
-                          .map((nextStatus) => (
-                          <button
-                            key={nextStatus}
-                            style={{
-                              ...styles.btnSmall,
-                              background: nextStatus === 'cancelado' ? '#dc2626' : ORDER_STATUS_COLORS[nextStatus],
-                              color: '#fff',
-                            }}
-                            onClick={() => handleStatusChange(order.id, nextStatus)}
-                          >
-                            {ORDER_STATUS_LABELS[nextStatus]}
-                          </button>
+                      <select
+                        style={{ ...styles.input, fontSize: '0.8125rem', minWidth: '160px' }}
+                        value={order.status}
+                        onChange={(e) => {
+                          const next = e.target.value as OrderStatus;
+                          if (next === order.status) return;
+
+                          if (next === 'cancelado') {
+                            const msg = order.payment_status === 'pagado'
+                              ? `Este pedido está marcado como PAGADO. ¿Seguro que quieres CANCELARLO?\n\nTicket: ${order.ticket_number}`
+                              : `¿Seguro que quieres cancelar este pedido?\n\nTicket: ${order.ticket_number}`;
+                            if (!window.confirm(msg)) return;
+                          }
+
+                          handleStatusChange(order.id, next);
+                        }}
+                      >
+                        {(Object.keys(ORDER_STATUS_LABELS) as OrderStatus[]).map((s) => (
+                          <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>
                         ))}
-                        {/* Payment status toggle */}
-                        {order.payment_status === 'pendiente' && (
-                          <button
-                            style={{ ...styles.btnSmall, background: '#16a34a', color: '#fff' }}
-                            onClick={() => handlePaymentStatusChange(order.id, 'pagado')}
-                          >
-                            Marcar pagado
-                          </button>
-                        )}
-                        {/* Delete */}
+                      </select>
+                    </td>
+                    <td style={styles.td}>
+                      <select
+                        style={{ ...styles.input, fontSize: '0.8125rem', minWidth: '140px' }}
+                        value={order.payment_status}
+                        onChange={(e) => {
+                          const next = e.target.value as PaymentStatus;
+                          if (next === order.payment_status) return;
+                          if (next === 'pendiente') {
+                            if (!window.confirm(`¿Seguro que quieres marcar como PENDIENTE este pago?\n\nTicket: ${order.ticket_number}`)) return;
+                          }
+                          handlePaymentStatusChange(order.id, next);
+                        }}
+                      >
+                        {(Object.keys(PAYMENT_STATUS_LABELS) as PaymentStatus[]).map((s) => (
+                          <option key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
                         {isAdmin && (
-                          deleteConfirm === order.id ? (
-                            <>
-                              <button style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }} onClick={() => handleDelete(order.id)}>Confirmar</button>
-                              <button style={{ ...styles.btnSmall, background: '#6b7280', color: '#fff' }} onClick={() => setDeleteConfirm(null)}>No</button>
-                            </>
-                          ) : (
-                            <button style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }} onClick={() => setDeleteConfirm(order.id)}>Eliminar</button>
-                          )
+                          <button
+                            type="button"
+                            style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }}
+                            onClick={() => {
+                              if (!window.confirm(`Eliminar este pedido NO se puede deshacer.\n\nTicket: ${order.ticket_number}\nCliente: ${order.client_name}`)) return;
+                              handleDelete(order.id);
+                            }}
+                          >
+                            Eliminar
+                          </button>
                         )}
                       </div>
                     </td>
