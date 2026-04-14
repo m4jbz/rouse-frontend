@@ -173,11 +173,13 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
   // Create form
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
+  const [newSection, setNewSection] = useState<string>('');
 
   // Edit state
   const [editId, setEditId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [editDesc, setEditDesc] = useState('');
+  const [editSection, setEditSection] = useState<string>('');
 
   // Delete confirm
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
@@ -202,9 +204,14 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
     e.preventDefault();
     clearMessages();
     try {
-      await createCategory({ name: newName, description: newDesc || undefined });
+      await createCategory({
+        name: newName,
+        description: newDesc || undefined,
+        section: newSection || undefined,
+      });
       setNewName('');
       setNewDesc('');
+      setNewSection('');
       setSuccess('Categoría creada');
       await load();
     } catch (err: any) {
@@ -216,6 +223,7 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
     setEditId(cat.id);
     setEditName(cat.name);
     setEditDesc(cat.description || '');
+    setEditSection(cat.section || '');
     clearMessages();
   }
 
@@ -224,7 +232,11 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
     if (editId === null) return;
     clearMessages();
     try {
-      await updateCategory(editId, { name: editName, description: editDesc || undefined });
+      await updateCategory(editId, {
+        name: editName,
+        description: editDesc || undefined,
+        section: editSection || null,
+      });
       setEditId(null);
       setSuccess('Categoría actualizada');
       await load();
@@ -263,6 +275,14 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
             <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.125rem' }}>Descripción</label>
             <input style={{ ...styles.input, width: '250px' }} value={newDesc} onChange={e => setNewDesc(e.target.value)} />
           </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.125rem' }}>Sección</label>
+            <select style={{ ...styles.input, minWidth: '160px' }} value={newSection} onChange={e => setNewSection(e.target.value)}>
+              <option value="">(Sin sección)</option>
+              <option value="pasteles">Pasteles</option>
+              <option value="postres">Postres</option>
+            </select>
+          </div>
           <button type="submit" style={styles.btnPrimary}>Crear</button>
         </form>
       </div>
@@ -280,6 +300,7 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
                 <th style={styles.th}>ID</th>
                 <th style={styles.th}>Nombre</th>
                 <th style={styles.th}>Descripción</th>
+                <th style={styles.th}>Sección</th>
                 <th style={styles.th}>Acciones</th>
               </tr>
             </thead>
@@ -296,6 +317,13 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
                         <input style={{ ...styles.input, width: '200px' }} value={editDesc} onChange={e => setEditDesc(e.target.value)} />
                       </td>
                       <td style={styles.td}>
+                        <select style={{ ...styles.input, minWidth: '140px' }} value={editSection} onChange={e => setEditSection(e.target.value)}>
+                          <option value="">(Sin sección)</option>
+                          <option value="pasteles">Pasteles</option>
+                          <option value="postres">Postres</option>
+                        </select>
+                      </td>
+                      <td style={styles.td}>
                         <span style={{ display: 'flex', gap: '0.25rem' }}>
                           <button style={styles.btnPrimary} onClick={handleUpdate as any}>Guardar</button>
                           <button style={styles.btnSecondary} onClick={() => setEditId(null)}>Cancelar</button>
@@ -307,6 +335,9 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
                       <td style={styles.td}>{cat.id}</td>
                       <td style={styles.td}>{cat.name}</td>
                       <td style={styles.td}>{cat.description || '—'}</td>
+                      <td style={styles.td}>
+                        {cat.section === 'pasteles' ? 'Pasteles' : cat.section === 'postres' ? 'Postres' : '—'}
+                      </td>
                       <td style={styles.td}>
                         <span style={{ display: 'flex', gap: '0.25rem' }}>
                           <button style={{ ...styles.btnSmall, background: '#3E2412', color: '#fff' }} onClick={() => startEdit(cat)}>Editar</button>

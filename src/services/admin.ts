@@ -183,14 +183,14 @@ export async function listCategories(section?: string): Promise<Category[]> {
   return adminApiFetch<Category[]>(`/categories/${params}`);
 }
 
-export async function createCategory(data: { name: string; description?: string; section?: string }): Promise<Category> {
+export async function createCategory(data: { name: string; description?: string; section?: string | null }): Promise<Category> {
   return adminApiFetchAuth<Category>('/categories/', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export async function updateCategory(id: number, data: { name?: string; description?: string; section?: string }): Promise<Category> {
+export async function updateCategory(id: number, data: { name?: string; description?: string; section?: string | null }): Promise<Category> {
   return adminApiFetchAuth<Category>(`/categories/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
