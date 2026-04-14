@@ -1,9 +1,10 @@
 import { useLocation, Link, Navigate } from 'react-router';
-import { CheckCircle, MessageCircle } from 'lucide-react';
+import { CheckCircle, MessageCircle, Download } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { CartDrawer } from '../components/CartDrawer';
 import { type OrderPublic, getWhatsAppUrl } from '@/services/orders';
+import { downloadOrderTicketPDF } from '@/services/tickets';
 
 export function OrderConfirmationPage() {
   const location = useLocation();
@@ -61,6 +62,19 @@ export function OrderConfirmationPage() {
               <MessageCircle className="w-6 h-6" />
               Enviar pedido por WhatsApp
             </a>
+
+            {/* Ticket PDF */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => downloadOrderTicketPDF(order)}
+                className="inline-flex items-center gap-3 bg-white text-[#3E2412] px-8 py-4 rounded-lg hover:bg-[#F5EDE0] transition-colors duration-300 shadow-md text-lg font-medium border border-[#D4B888]"
+                style={{ fontFamily: 'var(--font-sans)' }}
+              >
+                <Download className="w-6 h-6" />
+                Descargar ticket (PDF)
+              </button>
+            </div>
             <p
               className="text-sm text-[#6B4422] mt-3"
               style={{ fontFamily: 'var(--font-sans)' }}

@@ -35,6 +35,12 @@ export function RegisterPage() {
     }
   }
 
+  function cleanMxPhone10(raw: string): string {
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length === 12 && digits.startsWith('52')) return digits.slice(2);
+    return digits;
+  }
+
   function validate(): FormErrors {
     const newErrors: FormErrors = {};
 
@@ -48,10 +54,11 @@ export function RegisterPage() {
       newErrors.email = 'Ingresa un correo electrónico válido.';
     }
 
-    if (!formData.phone.trim()) {
+    const phoneDigits = cleanMxPhone10(formData.phone);
+    if (!phoneDigits) {
       newErrors.phone = 'El teléfono es obligatorio.';
-    } else if (!/^\+?[\d\s-]{7,15}$/.test(formData.phone)) {
-      newErrors.phone = 'Ingresa un número de teléfono válido.';
+    } else if (!/^\d{10}$/.test(phoneDigits)) {
+      newErrors.phone = 'Ingresa un número de teléfono válido de 10 dígitos (México).';
     }
 
     if (!formData.password) {
@@ -78,11 +85,18 @@ export function RegisterPage() {
       return;
     }
 
+    const normalized: RegisterData = {
+      ...formData,
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      phone: cleanMxPhone10(formData.phone),
+    };
+
     setErrors({});
     setIsLoading(true);
 
     try {
-      await register(formData);
+      await register(normalized);
       setSuccess(true);
     } catch (err: unknown) {
       const apiError = err as AuthError;
@@ -265,7 +279,10 @@ export function RegisterPage() {
                     autoComplete="tel"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="+52 733 123 4567"
+                    placeholder="10 dígitos"
+                    inputMode="numeric"
+                    pattern="\d{10}"
+                    maxLength={10}
                     className="w-full pl-11 pr-4 py-3 bg-[#EAD5B8] border border-[#D4B888] rounded-md text-[#3E2412] placeholder:text-[#6B4422]/60 focus:outline-none focus:ring-2 focus:ring-[#C8923A] focus:border-[#C8923A] transition-colors"
                     style={{ fontFamily: 'var(--font-sans)' }}
                   />

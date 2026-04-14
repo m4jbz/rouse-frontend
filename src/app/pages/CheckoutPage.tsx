@@ -31,6 +31,10 @@ function cleanPhone(raw: string): string {
   return digits;
 }
 
+function isValidMxPhone10(raw: string): boolean {
+  return cleanPhone(raw).length === 10;
+}
+
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { items, totalItems, totalPrice, clearCart } = useCart();
@@ -46,6 +50,8 @@ export function CheckoutPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const phoneDigits = cleanPhone(phone);
 
   // If cart is empty, redirect
   if (items.length === 0) {
@@ -81,6 +87,22 @@ export function CheckoutPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    const trimmedName = clientName.trim();
+    const digits = cleanPhone(phone);
+    if (!trimmedName) {
+      setError('Por favor ingresa tu nombre.');
+      return;
+    }
+    if (!isValidMxPhone10(phone)) {
+      setError('Por favor ingresa un teléfono válido de 10 dígitos (México).');
+      return;
+    }
+    if (deliveryType === 'delivery' && !address.trim()) {
+      setError('Por favor ingresa tu dirección de entrega.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -88,8 +110,8 @@ export function CheckoutPage() {
 
       const orderData: OrderCreate = {
         client_id: isAuthenticated && user ? user.id : null,
-        client_name: clientName.trim(),
-        phone: phone.trim(),
+        client_name: trimmedName,
+        phone: digits,
         delivery_address: deliveryType === 'delivery' ? address.trim() : null,
         payment_method: paymentMethod,
         notes: notes.trim() || null,
@@ -180,12 +202,15 @@ export function CheckoutPage() {
                     </label>
                     <input
                       type="tel"
-                      value={phone}
+                      value={phoneDigits}
                       onChange={(e) => setPhone(e.target.value)}
                       required
                       className="w-full px-4 py-2.5 border border-[#D4B888] rounded-lg bg-white text-[#3E2412] focus:outline-none focus:ring-2 focus:ring-[#C8923A] focus:border-transparent"
                       style={{ fontFamily: 'var(--font-sans)' }}
-                      placeholder="Tu numero de telefono"
+                      placeholder="10 dígitos"
+                      inputMode="numeric"
+                      pattern="\d{10}"
+                      maxLength={10}
                     />
                   </div>
                 </div>
