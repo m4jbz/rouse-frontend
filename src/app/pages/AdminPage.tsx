@@ -181,8 +181,6 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
   const [editDesc, setEditDesc] = useState('');
   const [editSection, setEditSection] = useState<string>('');
 
-  // Delete confirm
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
   async function load() {
     try {
@@ -249,12 +247,10 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
     clearMessages();
     try {
       await deleteCategory(id);
-      setDeleteConfirm(null);
       setSuccess('Categoría eliminada');
       await load();
     } catch (err: any) {
       setError(err?.detail || 'Error al eliminar categoría');
-      setDeleteConfirm(null);
     }
   }
 
@@ -309,7 +305,7 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
                 <tr key={cat.id}>
                   {editId === cat.id ? (
                     <>
-                      <td style={styles.td}>{cat.id}</td>
+                  {/* <td style={styles.td}>{cat.id}</td> */}
                       <td style={styles.td}>
                         <input style={styles.input} value={editName} onChange={e => setEditName(e.target.value)} />
                       </td>
@@ -332,7 +328,7 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
                     </>
                   ) : (
                     <>
-                      <td style={styles.td}>{cat.id}</td>
+                  {/* <td style={styles.td}>{cat.id}</td> */}
                       <td style={styles.td}>{cat.name}</td>
                       <td style={styles.td}>{cat.description || '—'}</td>
                       <td style={styles.td}>
@@ -342,14 +338,16 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
                         <span style={{ display: 'flex', gap: '0.25rem' }}>
                           <button style={{ ...styles.btnSmall, background: '#3E2412', color: '#fff' }} onClick={() => startEdit(cat)}>Editar</button>
                           {isAdmin && (
-                            deleteConfirm === cat.id ? (
-                              <>
-                                <button style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }} onClick={() => handleDelete(cat.id)}>Confirmar</button>
-                                <button style={{ ...styles.btnSmall, background: '#6b7280', color: '#fff' }} onClick={() => setDeleteConfirm(null)}>No</button>
-                              </>
-                            ) : (
-                              <button style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }} onClick={() => setDeleteConfirm(cat.id)}>Eliminar</button>
-                            )
+                            <button
+                              type="button"
+                              style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }}
+                              onClick={() => {
+                                if (!window.confirm(`Eliminar esta categoría NO se puede deshacer.\n\nNombre: ${cat.name}`)) return;
+                                handleDelete(cat.id);
+                              }}
+                            >
+                              Eliminar
+                            </button>
                           )}
                         </span>
                       </td>
@@ -386,7 +384,6 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
   const [editVImagePath, setEditVImagePath] = useState('');
   const [editUploadingImage, setEditUploadingImage] = useState(false);
   
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [error, setError] = useState('');
 
   function VariantImageUpload({
@@ -540,11 +537,9 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
     setError('');
     try {
       await deleteVariant(product.id, variantId);
-      setDeleteConfirm(null);
       onRefresh();
     } catch (err: any) {
       setError(err?.detail || 'Error');
-      setDeleteConfirm(null);
     }
   }
 
@@ -652,16 +647,18 @@ function VariantSection({ product, isAdmin, onRefresh }: { product: Product; isA
                             setEditVFlavor(v.flavor || '');
                             setEditVImagePath(v.image_path || ''); 
                           }}
-                        >Ed</button>
+                        >Editar</button>
                         {isAdmin && (
-                          deleteConfirm === v.id ? (
-                            <>
-                              <button style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }} onClick={() => handleDeleteVariant(v.id)}>Sí</button>
-                              <button style={{ ...styles.btnSmall, background: '#6b7280', color: '#fff' }} onClick={() => setDeleteConfirm(null)}>No</button>
-                            </>
-                          ) : (
-                            <button style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }} onClick={() => setDeleteConfirm(v.id)}>Del</button>
-                          )
+                          <button
+                            type="button"
+                            style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }}
+                            onClick={() => {
+                              if (!window.confirm(`Eliminar esta variante NO se puede deshacer.\n\nProducto: ${product.name}\nVariante: ${v.name}`)) return;
+                              handleDeleteVariant(v.id);
+                            }}
+                          >
+                            Eliminar
+                          </button>
                         )}
                       </span>
                     </td>
@@ -700,8 +697,6 @@ function ProductsTab({ isAdmin }: { isAdmin: boolean }) {
   const [editDesc, setEditDesc] = useState('');
   const [editActive, setEditActive] = useState(true);
 
-  // Delete confirm
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
   // Expanded product (to show variants)
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -780,12 +775,10 @@ function ProductsTab({ isAdmin }: { isAdmin: boolean }) {
     clearMessages();
     try {
       await deleteProduct(id);
-      setDeleteConfirm(null);
       setSuccess('Producto eliminado');
       await load();
     } catch (err: any) {
       setError(err?.detail || 'Error al eliminar producto');
-      setDeleteConfirm(null);
     }
   }
 
@@ -849,7 +842,7 @@ function ProductsTab({ isAdmin }: { isAdmin: boolean }) {
                   <tr key={prod.id}>
                     {editId === prod.id ? (
                       <>
-                        <td style={styles.td}>{prod.id}</td>
+                    {/* <td style={styles.td}>{prod.id}</td> */}
                         <td style={styles.td}>
                           <input style={styles.input} value={editName} onChange={e => setEditName(e.target.value)} />
                         </td>
@@ -876,7 +869,7 @@ function ProductsTab({ isAdmin }: { isAdmin: boolean }) {
                       </>
                     ) : (
                       <>
-                        <td style={styles.td}>{prod.id}</td>
+                    {/* <td style={styles.td}>{prod.id}</td> */}
                         <td style={styles.td}>{prod.name}</td>
                         <td style={styles.td}>{getCategoryName(prod.category_id)}</td>
                         <td style={styles.td}>{prod.description || '—'}</td>
@@ -901,14 +894,16 @@ function ProductsTab({ isAdmin }: { isAdmin: boolean }) {
                           <span style={{ display: 'flex', gap: '0.25rem' }}>
                             <button style={{ ...styles.btnSmall, background: '#3E2412', color: '#fff' }} onClick={() => startEdit(prod)}>Editar</button>
                             {isAdmin && (
-                              deleteConfirm === prod.id ? (
-                                <>
-                                  <button style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }} onClick={() => handleDelete(prod.id)}>Confirmar</button>
-                                  <button style={{ ...styles.btnSmall, background: '#6b7280', color: '#fff' }} onClick={() => setDeleteConfirm(null)}>No</button>
-                                </>
-                              ) : (
-                                <button style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }} onClick={() => setDeleteConfirm(prod.id)}>Eliminar</button>
-                              )
+                              <button
+                                type="button"
+                                style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }}
+                                onClick={() => {
+                                  if (!window.confirm(`Eliminar este producto NO se puede deshacer.\n\nNombre: ${prod.name}`)) return;
+                                  handleDelete(prod.id);
+                                }}
+                              >
+                                Eliminar
+                              </button>
                             )}
                           </span>
                         </td>
@@ -1272,7 +1267,6 @@ function SolicitudesTab({ isAdmin }: { isAdmin: boolean }) {
 
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
   async function load() {
     try {
@@ -1321,12 +1315,10 @@ function SolicitudesTab({ isAdmin }: { isAdmin: boolean }) {
     clearMessages();
     try {
       await deleteCustomCakeRequest(requestId);
-      setDeleteConfirm(null);
       setSuccess('Solicitud eliminada');
       await load();
     } catch (err: any) {
       setError(err?.detail || 'Error al eliminar solicitud');
-      setDeleteConfirm(null);
     }
   }
 
@@ -1544,29 +1536,16 @@ function SolicitudesTab({ isAdmin }: { isAdmin: boolean }) {
 
                         {/* Delete (admin only) */}
                         {isAdmin && (
-                          deleteConfirm === req.id ? (
-                            <>
-                              <button
-                                style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }}
-                                onClick={() => handleDelete(req.id)}
-                              >
-                                Confirmar
-                              </button>
-                              <button
-                                style={{ ...styles.btnSmall, background: '#6b7280', color: '#fff' }}
-                                onClick={() => setDeleteConfirm(null)}
-                              >
-                                No
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }}
-                              onClick={() => setDeleteConfirm(req.id)}
-                            >
-                              Eliminar
-                            </button>
-                          )
+                          <button
+                            type="button"
+                            style={{ ...styles.btnSmall, background: '#dc2626', color: '#fff' }}
+                            onClick={() => {
+                              if (!window.confirm(`Eliminar esta solicitud NO se puede deshacer.\n\nSolicitud #${req.id}\nCliente: ${req.client_name}`)) return;
+                              handleDelete(req.id);
+                            }}
+                          >
+                            Eliminar
+                          </button>
                         )}
                       </div>
                     )}
