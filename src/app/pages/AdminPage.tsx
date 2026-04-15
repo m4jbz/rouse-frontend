@@ -297,7 +297,7 @@ function CategoriesTab({ isAdmin }: { isAdmin: boolean }) {
           <table style={styles.table}>
             <thead>
               <tr>
-                <th style={styles.th}>ID</th>
+            {/* <th style={styles.th}>ID</th> */}
                 <th style={styles.th}>Nombre</th>
                 <th style={styles.th}>Descripción</th>
                 <th style={styles.th}>Sección</th>
@@ -834,7 +834,7 @@ function ProductsTab({ isAdmin }: { isAdmin: boolean }) {
           <table style={styles.table}>
             <thead>
               <tr>
-                <th style={styles.th}>ID</th>
+            {/* <th style={styles.th}>ID</th> */}
                 <th style={styles.th}>Nombre</th>
                 <th style={styles.th}>Categoría</th>
                 <th style={styles.th}>Descripción</th>
