@@ -63,6 +63,13 @@ export function OrderConfirmationPage() {
               Enviar pedido por WhatsApp
             </a>
 
+            <p
+              className="text-sm text-[#6B4422] mt-3"
+              style={{ fontFamily: 'var(--font-sans)' }}
+            >
+              Envia tu pedido por WhatsApp para confirmar con la pasteleria
+            </p>
+          </div>
 
           {/* Order details */}
           <div className="bg-[#FAF4EB] rounded-xl border border-[#D4B888] shadow-sm p-6">
