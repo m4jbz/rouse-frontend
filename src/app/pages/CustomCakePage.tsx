@@ -290,7 +290,7 @@ Revisa el panel de admin para más detalles.`;
       {/* Hero */}
       <section className="relative h-[340px] sm:h-[400px] lg:h-[450px] overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1621857426350-ddab819cf0cc"
+          src="https://codeberg.org/m4jbz/rouse-images/raw/branch/main/bg_main.jpg"
           alt="Pastel personalizado"
           className="absolute inset-0 w-full h-full object-cover"
         />

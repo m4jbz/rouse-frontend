@@ -5,7 +5,7 @@ export function Hero() {
     <section className="relative h-[600px] lg:h-[700px] overflow-hidden">
       <div className="absolute inset-0">
         <ImageWithFallback
-          src={'https://codeberg.org/m4jbz/rouse-images/raw/branch/main/images/fondo.jpg'}
+          src={'https://codeberg.org/m4jbz/rouse-images/raw/branch/main/bg_main2.jpg'}
           alt="Pastel de tres leches artesanal"
           className="w-full h-full object-cover"
         />
