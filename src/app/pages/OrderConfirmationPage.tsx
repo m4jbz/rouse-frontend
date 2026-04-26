@@ -64,6 +64,7 @@ export function OrderConfirmationPage() {
             </a>
 
             {/* Ticket PDF */}
+            {/* 
             <div className="mt-4">
               <button
                 type="button"
@@ -82,6 +83,7 @@ export function OrderConfirmationPage() {
               Envia tu pedido por WhatsApp para confirmar con la pasteleria
             </p>
           </div>
+          */}
 
           {/* Order details */}
           <div className="bg-[#FAF4EB] rounded-xl border border-[#D4B888] shadow-sm p-6">
