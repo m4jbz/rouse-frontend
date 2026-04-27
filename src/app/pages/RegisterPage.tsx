@@ -41,6 +41,11 @@ export function RegisterPage() {
     return digits;
   }
 
+  function mxPhoneE164(phone10Digits: string): string {
+    // Backend expects a real phone number; send Mexico numbers in E.164.
+    return `+52${phone10Digits}`;
+  }
+
   function validate(): FormErrors {
     const newErrors: FormErrors = {};
 
@@ -85,11 +90,13 @@ export function RegisterPage() {
       return;
     }
 
+    const phone10 = cleanMxPhone10(formData.phone);
+
     const normalized: RegisterData = {
       ...formData,
       name: formData.name.trim(),
       email: formData.email.trim(),
-      phone: cleanMxPhone10(formData.phone),
+      phone: mxPhoneE164(phone10),
     };
 
     setErrors({});
