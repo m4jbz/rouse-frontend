@@ -116,11 +116,40 @@ export function CustomCakePage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
+    if (name === 'client_phone') {
+      const cleaned = cleanPhone(value).slice(0, 10);
+      setFormData((prev) => ({
+        ...prev,
+        client_phone: cleaned,
+      }));
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: name === 'cake_layers' ? parseInt(value) || 1 : value,
     }));
   };
+
+  function handlePhoneKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (
+      e.key === 'Backspace' ||
+      e.key === 'Delete' ||
+      e.key === 'Tab' ||
+      e.key === 'Enter' ||
+      e.key === 'Escape' ||
+      e.key.startsWith('Arrow')
+    ) {
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    // Block non-digit characters (while still allowing paste via shortcuts).
+    if (e.key.length === 1 && !/\d/.test(e.key)) {
+      e.preventDefault();
+    }
+  }
 
   const handleImageUpload = useCallback(async (files: FileList) => {
     if (referenceImages.length + files.length > 5) {
@@ -171,9 +200,15 @@ export function CustomCakePage() {
       ? (accountPhone || formData.client_phone)
       : formData.client_phone;
 
+    const cleanedPhone = cleanPhone(resolvedClientPhone);
+
     // Validation
-    if (!resolvedClientName || !resolvedClientEmail || !resolvedClientPhone) {
+    if (!resolvedClientName || !resolvedClientEmail || !cleanedPhone) {
       setError('Por favor completa tus datos de contacto.');
+      return;
+    }
+    if (cleanedPhone.length !== 10) {
+      setError('Por favor ingresa un teléfono válido de 10 dígitos (México).');
       return;
     }
     if (!formData.cake_size || !formData.cake_flavor) {
@@ -191,7 +226,7 @@ export function CustomCakePage() {
       const requestData: CustomCakeRequestCreate = {
         client_name: resolvedClientName,
         client_email: resolvedClientEmail,
-        client_phone: resolvedClientPhone,
+        client_phone: cleanedPhone,
         cake_size: formData.cake_size,
         cake_layers: formData.cake_layers,
         cake_flavor: formData.cake_flavor,
@@ -396,8 +431,12 @@ Revisa el panel de admin para más detalles.`;
                         name="client_phone"
                         value={usingAccountContact ? (accountPhone || formData.client_phone) : formData.client_phone}
                         onChange={handleInputChange}
+                        onKeyDown={handlePhoneKeyDown}
                         required={!usingAccountContact || needsPhoneFromUser}
                         disabled={usingAccountContact && !!accountPhone}
+                        inputMode="numeric"
+                        pattern="\d{10}"
+                        maxLength={10}
                         className="w-full border-2 border-[#3E2412] px-4 py-2 focus:outline-none focus:border-[#C8923A] disabled:opacity-60"
                       />
                       {needsPhoneFromUser && (
